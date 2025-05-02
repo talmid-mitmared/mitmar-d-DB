@@ -1,0 +1,29 @@
+{
+  "name": "mitmar-d-redis",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/talmíd-mitmaréd-redis.umd.cjs",
+  "module": "./dist/talmíd-mitmaréd-redis.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/talmíd-mitmaréd-redis.js",
+      "require": "./dist/talmíd-mitmaréd-redis.umd.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "~5.7.2",
+    "vite": "^6.3.1",
+    "vite-plugin-dts": "^4.5.3"
+  }
+}
