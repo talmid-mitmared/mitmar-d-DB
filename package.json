@@ -1,29 +1,37 @@
 {
-  "name": "mitmar-d-redis",
-  "private": true,
-  "version": "0.0.0",
+  "name": "rslib-node-dual-ts",
+  "version": "1.0.0",
   "type": "module",
-  "main": "./dist/talmíd-mitmaréd-redis.umd.cjs",
-  "module": "./dist/talmíd-mitmaréd-redis.js",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/talmíd-mitmaréd-redis.js",
-      "require": "./dist/talmíd-mitmaréd-redis.umd.cjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "rslib build",
+    "dev": "rslib build --watch",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "watch": "nodemon dist/index.js"
   },
   "devDependencies": {
-    "@types/node": "^22.15.3",
-    "typescript": "~5.7.2",
-    "vite": "^6.3.1",
-    "vite-plugin-dts": "^4.5.3"
-  }
+    "@eslint/js": "^9.23.0",
+    "@rslib/core": "^0.6.8",
+    "@types/node": "^22.8.1",
+    "eslint": "^9.23.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.29.0",
+    "vitest": "^3.1.2"
+  },
+  "private": true
 }
