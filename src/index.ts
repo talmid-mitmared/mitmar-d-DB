@@ -1,110 +1,226 @@
-class Node {
-  public t: number;
-  public keys: number[] = [];
-  public children: Node[] = [];
+const utils = {
+  sliceArrayToTargetIndex<T>({
+    lists,
+    startIndex = 0,
+    destIndex,
+  }: {
+    lists: Array<T>;
+    startIndex?: number;
+    destIndex: number;
+  }) {
+    const leftKeys = lists.slice(startIndex, destIndex);
+    return leftKeys;
+  },
 
-  constructor(t: number, keys: number[] = []) {
-    this.t = t;
-    this.keys = keys;
-  }
+  insertElementInArray<T>({
+    baseLists,
+    indexToInsert,
+    elementsToInsert,
+  }: {
+    baseLists: Array<T>;
+    indexToInsert: number;
+    elementsToInsert: Array<T>;
+  }) {
+    baseLists.splice(indexToInsert, 1, ...elementsToInsert);
 
-  public search(queryKey: number): number | null {
-    let indexQuery = 0;
-    while (indexQuery < this.keys.length) {
-      const searchedKey = this.keys[indexQuery];
+    return baseLists;
+  },
 
-      if (queryKey === searchedKey) {
-        return searchedKey;
-      }
+  getSearchQueryIndex<T>(lists: Array<T>, target: T) {
+    const index = lists.findIndex((element) => target < element);
 
-      if (queryKey < searchedKey) break;
-
-      indexQuery++;
+    if (index === -1) {
+      return lists.length;
     }
 
-    if (this.children.length === 0) {
+    return index;
+  },
+};
+
+class Page {
+  public t: number;
+  private recordKeys: number[] = [];
+  public children: Page[] = [];
+
+  constructor(
+    minimumDegree: number,
+    keys: number[] = [],
+    children: Page[] = [],
+  ) {
+    this.t = minimumDegree;
+    this.recordKeys = keys;
+    this.children = children;
+  }
+
+  // STABLE => I GUESS?
+  public Search(queryKey: number): number | null {
+    const index = utils.getSearchQueryIndex(this.recordKeys, queryKey);
+
+    if (this.recordKeys?.[index - 1] === queryKey) {
+      return queryKey;
+    }
+
+    if (this.isLeaf) {
       return null;
     }
 
-    return this.children[indexQuery].search(queryKey);
+    return this.children[index]?.Search(queryKey);
   }
 
-  public insert(queryKey: number, parentNode?: Node) {
-    if (this.isLeaf()) {
-      // Only last depth of node can operate this
-      if (this.isKeysFull()) {
-        const { primaryKey, leftNode, rightNode } = this.splitChild();
-
-        if (parentNode == null) {
-          this.keys = [primaryKey];
-
-          this.children = [leftNode, rightNode];
-        } else {
-          const childIndex = parentNode.keys.findIndex(
-            (key) => key > primaryKey,
-          );
-          parentNode.children.splice(childIndex, 1, leftNode, rightNode);
-          parentNode.keys.push(primaryKey);
-          parentNode.keys.sort((a, b) => a - b);
-        }
-      } else {
-        this.keys.push(queryKey);
-        this.keys.sort((a, b) => a - b);
-
-        return;
-      }
+  // 50, 30, 20, 33, 103, 404, 1212
+  public Insert(queryKey: number, parentNode?: Page) {
+    if (this.isLeaf === true && this.isPageFull === false) {
+      return (this.addNewRecordKeys = queryKey);
     }
 
-    if (this.isLeaf() === false) {
-      const leftIndex = this.keys.findIndex((key) => key > queryKey);
+    if (this.isPageFull === true && parentNode) {
+      this.splitChildren(parentNode);
 
-      const targetNode =
-        leftIndex === -1
-          ? this.children[this.children.length - 1]
-          : this.children[leftIndex];
+      const index = utils.getSearchQueryIndex(parentNode.recordKeys, queryKey);
 
-      targetNode.insert(queryKey, this);
+      parentNode.children[index]?.Insert(queryKey, this);
     }
+
+    /**
+     * If there is more children, we have to traverse till we encounter no children aka leaf
+     * Since in B-tree, there is no explicit left,right variable we have to use comparing to get child index
+     * example, You have
+     * Node[
+     *  keys:[20]
+     *  children:
+     *    Node: keys[10, 15]
+     *    Node: keys[21, 23]
+     * ]
+     *
+     * If you wanna insert the new key 30, You have to compare the index of current key.
+     * Since the current keys:[20], the index that is smaller than 30 doesn't exists. So we have to go
+     * to right(Node: keys[21, 23]), this means that we have to go to children that is children[1];Node: keys[21, 23]
+     * the index "1" value can get via use current node(keys:[20]).length, which is "1"
+     *
+     */
+    const index = utils.getSearchQueryIndex(this.recordKeys, queryKey);
+
+    this.children[index]?.Insert(queryKey, this);
   }
 
-  private splitChild() {
-    const primaryIndex = BTree.PrimaryKeyIndex(this.t);
+  public set assignNewKeys(keys: number[]) {
+    this.recordKeys = keys;
+  }
+  public set assignNewChildren(children: Page[]) {
+    this.children = children;
+  }
 
-    const leftKeys = this.keys.slice(0, primaryIndex);
-    const rightKeys = this.keys.slice(primaryIndex + 1);
-    const primaryKey = this.keys[primaryIndex];
+  /**
+   * I feel guilty... This code is so simple and maybe breaks OOP rules
+   */
+  private set addNewRecordKeys(key: number) {
+    this.recordKeys.push(key);
+    this.recordKeys.sort((a, b) => a - b);
+  }
 
-    const leftNode = new Node(this.t, leftKeys);
-    const rightNode = new Node(this.t, rightKeys);
+  public splitChildren(parentNode: Page) {
+    const { primaryKey, leftPage, rightPage } = this.makePrimaryKey();
+
+    const newChildren = utils.insertElementInArray({
+      baseLists: parentNode.children,
+      indexToInsert: parentNode.indexToInsert(primaryKey),
+      elementsToInsert: [leftPage, rightPage],
+    });
+
+    parentNode.assignNewChildren = newChildren;
+    parentNode.addNewRecordKeys = primaryKey;
+  }
+
+  public makePrimaryKey() {
+    const middleIndex = this.primaryKeyIndex;
+    const primaryKey = this.recordKeys[middleIndex];
+
+    const leftChildren = this.children.slice(0, this.t);
+    const rightChildren = this.children.slice(this.t);
+
+    const leftKeys = utils.sliceArrayToTargetIndex({
+      lists: this.recordKeys,
+      startIndex: 0,
+      destIndex: middleIndex,
+    });
+
+    const leftPage = new Page(this.t, leftKeys, leftChildren);
+
+    const rightKeys = utils.sliceArrayToTargetIndex({
+      lists: this.recordKeys,
+      startIndex: middleIndex + 1,
+      destIndex: this.recordKeys.length,
+    });
+
+    const rightPage = new Page(this.t, rightKeys, rightChildren);
 
     return {
-      leftNode,
-      rightNode,
+      leftPage,
+      rightPage,
       primaryKey,
     };
   }
 
-  private isLeaf() {
+  private indexToInsert(targetKey: number) {
+    const index = this.recordKeys.findIndex((key) => targetKey < key);
+    return index === -1 ? this.recordKeys.length : index;
+  }
+
+  public get isLeaf() {
     return this.children.length === 0;
   }
 
-  public isKeysFull() {
-    return this.keys.length === BTree.MaxNumberOfKeys(this.t);
+  public get isPageFull() {
+    return this.recordKeys.length >= Page.MaxNumberOfKeysFormula(this.t);
+  }
+
+  public get getRecordKeys() {
+    return this.recordKeys;
+  }
+
+  public get primaryKeyIndex() {
+    return Page.PrimaryKeyIndexFormula(this.t);
+  }
+
+  static MaxNumberOfKeysFormula(degree: number) {
+    const formula = (t: number) => {
+      return 2 * t - 1;
+    };
+
+    return formula(degree);
+  }
+
+  static PrimaryKeyIndexFormula(degree: number) {
+    const formula = (t: number) => {
+      return t - 1;
+    };
+
+    return formula(degree);
+  }
+  public get getSplicedPrimaryKey() {
+    return this.recordKeys.splice(this.primaryKeyIndex, 1);
   }
 }
 
 class BTree {
   public t: number;
-  public root: Node;
+  public root: Page;
 
   constructor(t: number) {
-    this.root = new Node(t);
+    this.root = new Page(t);
     this.t = t;
   }
 
   insert(queryKey: number) {
-    if (this.root.search(queryKey) == null) {
-      this.root.insert(queryKey);
+    if (this.root.Search(queryKey) == null) {
+      if (this.root.isPageFull) {
+        const newParentPage = new Page(this.t);
+
+        this.root.splitChildren(newParentPage);
+
+        this.root = newParentPage;
+      }
+      this.root.Insert(queryKey);
     }
   }
 
@@ -135,28 +251,29 @@ class BTree {
 
 const btree = new BTree(2);
 [
-  50, 40, 30, 20, 10, 60, 70, 80, 90, 100, 50, 40, 30, 20, 10, 60, 70, 80, 90,
-  100,
+  0, -100, 42, -101, -5, 6, 17, 99999, 1000000, 1000001, 1000002, -120,
+  100000003, 1000004, 1000005, 1000006, 1000006, 1000005, 1000005, 1000000,
+  12341234,
 ].forEach((val) => {
   btree.insert(val);
 });
 
 generateDotFromBTree(btree.root);
 
-// https://dreampuf.github.io/GraphvizOnline/?engine=dot
+// https:dreampuf.github.io/GraphvizOnline/?engine=dot
 function generateDotFromBTree(
-  node: Node,
+  node: Page,
   id = 0,
 ): { dot: string; nextId: number } {
   const nodeId = id;
-  const numKeys = node.keys.length;
+  const numKeys = node.getRecordKeys.length;
 
   // Build the record label with keys and ports
   const labelParts: string[] = [];
   for (let i = 0; i < numKeys; i++) {
-    labelParts.push(`<c${i}> | ${node.keys[i]}`);
+    labelParts.push(`<c${i}> | ${node.getRecordKeys[i]}`);
   }
-  labelParts.push(`<c${numKeys}>`); // for the rightmost child
+  labelParts.push(`<c${numKeys}>`); //for the rightmost child
 
   let dot = `  node${nodeId} [label="${labelParts.join(' | ')}", shape=record];\n`;
   let nextId = id + 1;
@@ -177,8 +294,10 @@ function buildGraphviz(btree: BTree) {
   const { dot } = generateDotFromBTree(btree.root);
   return `digraph BTree {\n  node [shape=record, style=filled, fillcolor=white];\n${dot}}`;
 }
-function printBTree(node: Node, prefix = '', isTail = true) {
-  console.log(`${prefix}${isTail ? '└── ' : '├── '}[${node.keys.join(', ')}]`);
+function printBTree(node: Page, prefix = '', isTail = true) {
+  console.log(
+    `${prefix}${isTail ? '└── ' : '├── '}[${node.getRecordKeys.join(', ')}]`,
+  );
 
   for (let i = 0; i < node.children.length; i++) {
     const child = node.children[i];
@@ -191,6 +310,7 @@ const dotCode = buildGraphviz(btree);
 console.log(printBTree(btree.root));
 
 console.log(dotCode);
+console.log(btree.root);
 
 // const N = 100000;
 
@@ -198,8 +318,5 @@ console.log(dotCode);
 //   btree.insert(i);
 // }
 
-// visitedNodes = 0;
-// btree.root.search(N); // or any key
-
-// console.log('Visited nodes:', visitedNodes);
 // console.log('Log base t of N:', Math.log(N) / Math.log(16));
+// btree.root.validateStructure();
