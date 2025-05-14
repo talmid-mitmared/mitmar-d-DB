@@ -38,11 +38,29 @@ describe('BTree Insertion and Search', () => {
     expect(btree.rootPage.Search(201)).toBe(null);
   });
 
-  it('should search correctly in deep tree', () => {
-    const btree = new BTree(3);
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((val) => btree.Insert(val));
-    expect(btree.rootPage.Search(5)).toBe(5);
-    expect(btree.rootPage.Search(10)).toBe(10);
-    expect(btree.rootPage.Search(11)).toBe(null);
+  it('should promote primaryKey key when a child page is full', () => {
+    const degree = 2;
+    const btree = new BTree(degree);
+    const values = [0, -100, 42, -101];
+
+    values.forEach((val) => btree.Insert(val));
+
+    expect(btree.rootPage.getRecordKeys[0]).toBe(0);
+  });
+
+  it('should promote the primary key when the root page is full', () => {
+    const degree = 2;
+    const btree = new BTree(degree);
+    const values = [0, -100, 42, -101, -5, 6, 17, -103, 18, -105, -104];
+
+    values.forEach((val) => btree.Insert(val));
+
+    expect(btree.rootPage.getRecordKeys[0]).toBe(0);
+
+    const leftChildren = btree.rootPage.children[0].getRecordKeys;
+    const rightChildren = btree.rootPage.children[1].getRecordKeys;
+
+    expect(JSON.stringify(leftChildren)).toBe(JSON.stringify([-103, -100]));
+    expect(JSON.stringify(rightChildren)).toBe(JSON.stringify([17]));
   });
 });
