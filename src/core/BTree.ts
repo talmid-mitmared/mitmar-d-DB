@@ -24,14 +24,15 @@ export class Page {
    * Time complexity: O(log N) in a balanced B-tree.
    */
   public Search(queryKey: number): boolean {
-    if (this.recordKeys.includes(queryKey)) {
+    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
+
+    if (this.recordKeys[index + 1] === queryKey) {
       return true;
     }
 
     if (this.isLeaf) {
       return false;
     }
-    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
 
     return this._children[index]?.Search(queryKey);
   }
