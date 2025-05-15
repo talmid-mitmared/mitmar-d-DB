@@ -23,16 +23,15 @@ export class Page {
    * Performs a search operation in the B-tree.
    * Time complexity: O(log N) in a balanced B-tree.
    */
-  public Search(queryKey: number): number | null {
-    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
-
-    if (this.recordKeys?.[index - 1] === queryKey) {
-      return queryKey;
+  public Search(queryKey: number): boolean {
+    if (this.recordKeys.includes(queryKey)) {
+      return true;
     }
 
     if (this.isLeaf) {
-      return null;
+      return false;
     }
+    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
 
     return this._children[index]?.Search(queryKey);
   }
@@ -63,6 +62,8 @@ export class Page {
       const index = Page.GetSearchQueryIndex(parentNode.recordKeys, queryKey);
 
       parentNode._children[index]?.Insert(queryKey, this);
+
+      return;
     }
 
     const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
