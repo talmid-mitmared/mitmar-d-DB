@@ -5,8 +5,8 @@ describe('BTree Insertion and Search', () => {
   it('should insert and search single value correctly', () => {
     const btree = new BTree(2);
     btree.Insert(10);
-    expect(btree.rootPage.Search(10)).toBe(10);
-    expect(btree.rootPage.Search(20)).toBe(null);
+    expect(btree.rootPage.Search(10)).toBe(true);
+    expect(btree.rootPage.Search(20)).toBe(false);
   });
 
   it('should insert multiple values and structure remains valid', () => {
@@ -14,9 +14,9 @@ describe('BTree Insertion and Search', () => {
     const values = [50, 40, 30, 20, 10, 60, 70, 80, 90, 100];
     values.forEach((val) => btree.Insert(val));
     values.forEach((val) => {
-      expect(btree.rootPage.Search(val)).toBe(val);
+      expect(btree.rootPage.Search(val)).toBe(true);
     });
-    expect(btree.rootPage.Search(999)).toBe(null);
+    expect(btree.rootPage.Search(999)).toBe(false);
   });
 
   it('should not insert duplicates', () => {
@@ -33,9 +33,9 @@ describe('BTree Insertion and Search', () => {
       btree.Insert(i);
     }
     for (let i = 1; i <= count; i++) {
-      expect(btree.rootPage.Search(i)).toBe(i);
+      expect(btree.rootPage.Search(i)).toBe(true);
     }
-    expect(btree.rootPage.Search(201)).toBe(null);
+    expect(btree.rootPage.Search(201)).toBe(false);
   });
 
   it('should promote primaryKey key when a child page is full', () => {
