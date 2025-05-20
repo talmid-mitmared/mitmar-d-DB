@@ -47,6 +47,7 @@ function printBTree(node: Page, prefix = '', isTail = true) {
 }
 
 const btree = new BTree(2);
+
 [10, 20, 5, 6, 12, 30, 7, 17, 18, 19, 21, 22].forEach((val) => {
   btree.Insert(val);
 });

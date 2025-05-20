@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from '@jest/globals';
 import { BTree } from '../BTree';
 
 describe('BTree Insertion and Search', () => {
@@ -23,7 +23,7 @@ describe('BTree Insertion and Search', () => {
     const btree = new BTree(2);
     btree.Insert(15);
     btree.Insert(15);
-    expect(btree.rootPage.Search(15)).toBe(15);
+    expect(btree.rootPage.Search(15)).toBe(true);
   });
 
   it('should handle large number of insertions and search correctly', () => {

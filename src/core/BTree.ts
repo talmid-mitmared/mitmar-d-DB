@@ -96,7 +96,6 @@ export class Page {
           parentNode._children[parentIndex]?.Delete(queryKey, this);
         }
       }
-      console.log(index);
 
       const deletedKeys = insertElementInArray({
         baseLists: this.recordKeys,
@@ -243,6 +242,7 @@ export class BTree {
 
   public Insert(queryKey: number) {
     const queryFounded = this.root.Search(queryKey);
+    console.log(queryFounded);
 
     if (queryFounded) return;
 
