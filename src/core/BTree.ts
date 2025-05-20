@@ -71,42 +71,46 @@ export class Page {
     this._children[index]?.Insert(queryKey, this);
   }
 
-  public Delete(queryKey: number, parentNode?: Page) {
-    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
+  public Delete(queryKey: number) {
+    const nextChildIndex = this.getNextChildDirection(queryKey);
 
-    if (this.recordKeys.includes(queryKey) === false) {
-      this._children[index]?.Delete(queryKey, this);
-      return;
-    }
-    if (this.isLeaf) {
-      if (this.recordKeys.length === 1) {
-        if (parentNode) {
-          const parentIndex = Page.GetSearchQueryIndex(
-            parentNode.recordKeys,
-            queryKey,
-          );
+    const queryChild = this._children[nextChildIndex];
+    const queryFoundedInChild = queryChild?.recordKeys.includes(queryKey);
 
-          const predecssor =
-            parentNode._children[parentIndex - 1]?.getPredecessor();
+    if (queryFoundedInChild && queryChild.isLeaf) {
+      /**
+       * The B-Tree will be imbalanced if the node key length is less or equal to 0 after deletion
+       */
+      const treeWillImbalanced = queryChild.recordKeys.length - 1 <= 0;
 
-          if (predecssor == null) return;
+      if (
+        /**
+         * Since it is obvious that the the tree will be imbalanced, we have to borrow neighbor key to make it balanced
+         */
+        treeWillImbalanced
+      ) {
+        const borrowedKey = this.borrowKey(nextChildIndex);
 
-          parentNode._children[parentIndex].appendNewRecordKeys = predecssor;
+        if (borrowedKey == null) return;
 
-          parentNode._children[parentIndex]?.Delete(queryKey, this);
-        }
+        this._children[nextChildIndex].appendNewRecordKeys = borrowedKey;
       }
 
+      const newINdex = this._children[nextChildIndex].recordKeys.findIndex(
+        (element) => queryKey === element,
+      );
       const deletedKeys = insertElementInArray({
-        baseLists: this.recordKeys,
-        indexToInsert: index + 1,
+        baseLists: this._children[nextChildIndex].recordKeys,
+        indexToInsert: newINdex,
         elementsToInsert: [],
       });
 
-      this.assignNewKeys = deletedKeys;
+      this._children[nextChildIndex].assignNewKeys = deletedKeys;
 
       return;
     }
+
+    this._children[nextChildIndex]?.Delete(queryKey);
   }
 
   public promoteIncomingPageAsParent(parentNode: Page) {
@@ -158,22 +162,42 @@ export class Page {
     };
   }
 
+  private borrowKey(targetIndex: number) {
+    const haveToGoRightChild = targetIndex === this.recordKeys.length;
+
+    const queryIsBiggerThanParentKey = haveToGoRightChild === true;
+
+    const leftChildIndex = targetIndex - 1;
+    const rightChildIndex = targetIndex + 1;
+
+    /**
+     * If the query is bigger than parent key which means that it is one the right of the parent key, so we
+     * have to borrow key on the left of the parent key.
+     */
+    const borrowedKey = queryIsBiggerThanParentKey
+      ? this._children[leftChildIndex]?.borrowLargestKeyInNode()
+      : this._children[rightChildIndex]?.borrowSmallestKeyInNode();
+
+    return borrowedKey;
+  }
   /**
    * predecssor is the larget key of left child node
    */
-  private getPredecessor() {
+  private borrowLargestKeyInNode() {
     return this.recordKeys.pop();
   }
 
   /**
    * successor is the smallest key of right child node
    */
-  private getSuccessor(currentIndex: number) {
-    const rightSubtree = this.children?.[currentIndex];
+  private borrowSmallestKeyInNode() {
+    return this.recordKeys.shift();
+  }
 
-    if (rightSubtree == null) return null;
+  private getNextChildDirection(queryKey: number) {
+    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
 
-    return rightSubtree.recordKeys[0];
+    return index;
   }
 
   public get isLeaf() {
@@ -217,6 +241,7 @@ export class Page {
 
   static GetSearchQueryIndex<T>(lists: Array<T>, target: T) {
     const index = lists.findIndex((element) => target < element);
+
     if (index === -1) {
       return lists.length;
     }
@@ -242,7 +267,6 @@ export class BTree {
 
   public Insert(queryKey: number) {
     const queryFounded = this.root.Search(queryKey);
-    console.log(queryFounded);
 
     if (queryFounded) return;
 
