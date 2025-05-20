@@ -24,15 +24,14 @@ export class Page {
    * Time complexity: O(log N) in a balanced B-tree.
    */
   public Search(queryKey: number): boolean {
-    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
-
-    if (this.recordKeys[index + 1] === queryKey) {
+    if (this.recordKeys.includes(queryKey)) {
       return true;
     }
 
     if (this.isLeaf) {
       return false;
     }
+    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
 
     return this._children[index]?.Search(queryKey);
   }
@@ -70,6 +69,45 @@ export class Page {
     const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
 
     this._children[index]?.Insert(queryKey, this);
+  }
+
+  public Delete(queryKey: number, parentNode?: Page) {
+    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
+
+    if (this.recordKeys.includes(queryKey) === false) {
+      this._children[index]?.Delete(queryKey, this);
+      return;
+    }
+    if (this.isLeaf) {
+      if (this.recordKeys.length === 1) {
+        if (parentNode) {
+          const parentIndex = Page.GetSearchQueryIndex(
+            parentNode.recordKeys,
+            queryKey,
+          );
+
+          const predecssor =
+            parentNode._children[parentIndex - 1]?.getPredecessor();
+
+          if (predecssor == null) return;
+
+          parentNode._children[parentIndex].appendNewRecordKeys = predecssor;
+
+          parentNode._children[parentIndex]?.Delete(queryKey, this);
+        }
+      }
+      console.log(index);
+
+      const deletedKeys = insertElementInArray({
+        baseLists: this.recordKeys,
+        indexToInsert: index + 1,
+        elementsToInsert: [],
+      });
+
+      this.assignNewKeys = deletedKeys;
+
+      return;
+    }
   }
 
   public promoteIncomingPageAsParent(parentNode: Page) {
@@ -119,6 +157,24 @@ export class Page {
       rightPage,
       primaryKey,
     };
+  }
+
+  /**
+   * predecssor is the larget key of left child node
+   */
+  private getPredecessor() {
+    return this.recordKeys.pop();
+  }
+
+  /**
+   * successor is the smallest key of right child node
+   */
+  private getSuccessor(currentIndex: number) {
+    const rightSubtree = this.children?.[currentIndex];
+
+    if (rightSubtree == null) return null;
+
+    return rightSubtree.recordKeys[0];
   }
 
   public get isLeaf() {
@@ -198,6 +254,14 @@ export class BTree {
     }
 
     this.root.Insert(queryKey);
+  }
+
+  public Delete(queryKey: number) {
+    const queryFounded = this.root.Search(queryKey);
+
+    if (queryFounded) {
+      this.root.Delete(queryKey);
+    }
   }
 
   public get rootPage() {
