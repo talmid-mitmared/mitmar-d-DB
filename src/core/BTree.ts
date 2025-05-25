@@ -1,4 +1,9 @@
-import { insertElementInArray, sliceArrayToTargetIndex } from './utils';
+import {
+  deleteElementInArray,
+  findTargetIndex,
+  insertElementInArray,
+  sliceArrayToTargetIndex,
+} from './utils';
 
 export class Page {
   /**
@@ -24,16 +29,18 @@ export class Page {
    * Time complexity: O(log N) in a balanced B-tree.
    */
   public Search(queryKey: number): boolean {
-    if (this.recordKeys.includes(queryKey)) {
+    const queryFounded = this.recordKeys.includes(queryKey);
+    if (queryFounded) {
       return true;
     }
 
-    if (this.isLeaf) {
+    if (this.isLeaf && queryFounded === false) {
       return false;
     }
-    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
 
-    return this._children[index]?.Search(queryKey);
+    return this._children[this.getNextChildDirection(queryKey)]?.Search(
+      queryKey,
+    );
   }
 
   public Insert(queryKey: number, parentNode?: Page) {
@@ -46,7 +53,7 @@ export class Page {
       this.isLeaf &&
       !this.isPageFull
     ) {
-      return (this.appendNewRecordKeys = queryKey);
+      return (this.addKey = queryKey);
     }
 
     if (
@@ -59,58 +66,68 @@ export class Page {
     ) {
       this.promoteIncomingPageAsParent(parentNode);
 
-      const index = Page.GetSearchQueryIndex(parentNode.recordKeys, queryKey);
+      const index = parentNode.getNextChildDirection(queryKey);
 
       parentNode._children[index]?.Insert(queryKey, this);
 
       return;
     }
 
-    const index = Page.GetSearchQueryIndex(this.recordKeys, queryKey);
+    const index = this.getNextChildDirection(queryKey);
 
     this._children[index]?.Insert(queryKey, this);
   }
 
-  public Delete(queryKey: number) {
+  public Delete(queryKey: number, parentNode?: Page) {
     const nextChildIndex = this.getNextChildDirection(queryKey);
-
     const queryChild = this._children[nextChildIndex];
-    const queryFoundedInChild = queryChild?.recordKeys.includes(queryKey);
 
-    if (queryFoundedInChild && queryChild.isLeaf) {
-      /**
-       * The B-Tree will be imbalanced if the node key length is less or equal to 0 after deletion
-       */
-      const treeWillImbalanced = queryChild.recordKeys.length - 1 <= 0;
+    const indexOfQueryInChild = findTargetIndex(
+      queryChild?.recordKeys,
+      queryKey,
+    );
 
-      if (
-        /**
-         * Since it is obvious that the the tree will be imbalanced, we have to borrow neighbor key to make it balanced
-         */
-        treeWillImbalanced
-      ) {
-        const borrowedKey = this.borrowKey(nextChildIndex);
+    if (indexOfQueryInChild != null) {
+      if (queryChild.isLeaf) {
+        if (
+          /**
+           * Since it is obvious that the the tree will be imbalanced, we have to borrow neighbor key to make it balanced
+           */
+          queryChild.treeWillUnbalanced
+        ) {
+          const { borrowedKey, borrowedIndex } =
+            this.borrowKeyFromChild(nextChildIndex);
+
+          const baseKey = this.recordKeys[indexOfQueryInChild];
+
+          this._children[borrowedIndex].addKey = baseKey;
+
+          this.recordKeys[indexOfQueryInChild] = borrowedKey;
+        }
+      } else {
+        const { borrowedKey } = queryChild.borrowKeyFromChild(nextChildIndex);
 
         if (borrowedKey == null) return;
 
-        this._children[nextChildIndex].appendNewRecordKeys = borrowedKey;
+        queryChild.addKey = borrowedKey;
       }
 
-      const newINdex = this._children[nextChildIndex].recordKeys.findIndex(
-        (element) => queryKey === element,
-      );
-      const deletedKeys = insertElementInArray({
-        baseLists: this._children[nextChildIndex].recordKeys,
-        indexToInsert: newINdex,
-        elementsToInsert: [],
-      });
-
-      this._children[nextChildIndex].assignNewKeys = deletedKeys;
+      this._children[nextChildIndex].deleteKeys = queryKey;
 
       return;
     }
 
-    this._children[nextChildIndex]?.Delete(queryKey);
+    this._children[nextChildIndex]?.Delete(queryKey, this);
+  }
+
+  /**
+   * The B-Tree will be Unbalanced if the node key length is less or equal to 0 after deletion
+   */
+  private get treeWillUnbalanced() {
+    const DELETE_COUNT = 1;
+    const futureKeyLength = this.recordKeys.length - DELETE_COUNT;
+
+    return this.isPageUnderflow(futureKeyLength);
   }
 
   public promoteIncomingPageAsParent(parentNode: Page) {
@@ -126,7 +143,39 @@ export class Page {
     });
 
     parentNode.assignNewChildren = newChildren;
-    parentNode.appendNewRecordKeys = primaryKey;
+    parentNode.addKey = primaryKey;
+  }
+
+  // Splits this node into two new nodes and returns left/right + promoted middle key
+  private splitOperationV2(index: number) {
+    const primaryKey = this.recordKeys[index];
+
+    /**
+     * When promoting a key, we must also consider splitting the child nodes.
+     * The children are divided into left and right groups corresponding to the split.
+     */
+    const { left: leftChildren, right: rightChildren } =
+      Page.SliceArrayIntoLeftRight(this._children, index + 1);
+
+    const leftKeys = sliceArrayToTargetIndex({
+      lists: this.recordKeys,
+      destIndex: index,
+    });
+
+    const rightKeys = sliceArrayToTargetIndex({
+      lists: this.recordKeys,
+      startIndex: index + 1,
+      destIndex: this.recordKeys.length,
+    });
+
+    const leftPage = new Page(this._minimumDegree, leftKeys, leftChildren);
+    const rightPage = new Page(this._minimumDegree, rightKeys, rightChildren);
+
+    return {
+      leftPage,
+      rightPage,
+      primaryKey,
+    };
   }
 
   // Splits this node into two new nodes and returns left/right + promoted middle key
@@ -162,28 +211,40 @@ export class Page {
     };
   }
 
-  private borrowKey(targetIndex: number) {
-    const haveToGoRightChild = targetIndex === this.recordKeys.length;
+  private borrowKeyFromChild(baseParentIndex: number) {
+    const queryChild = this._children[baseParentIndex];
+    const rightDirection = baseParentIndex >= this.recordKeys.length;
 
-    const queryIsBiggerThanParentKey = haveToGoRightChild === true;
+    const isRightChildWillUnbalanced =
+      rightDirection === true && queryChild.treeWillUnbalanced;
 
-    const leftChildIndex = targetIndex - 1;
-    const rightChildIndex = targetIndex + 1;
+    const leftChildIndex = baseParentIndex - 1;
+    const rightChildIndex = baseParentIndex;
 
     /**
      * If the query is bigger than parent key which means that it is one the right of the parent key, so we
      * have to borrow key on the left of the parent key.
      */
-    const borrowedKey = queryIsBiggerThanParentKey
+    const borrowedKey = isRightChildWillUnbalanced
       ? this._children[leftChildIndex]?.borrowLargestKeyInNode()
       : this._children[rightChildIndex]?.borrowSmallestKeyInNode();
 
-    return borrowedKey;
+    return {
+      borrowedKey,
+      borrowedIndex: isRightChildWillUnbalanced
+        ? leftChildIndex + 1
+        : rightChildIndex,
+    } as const;
   }
+
   /**
    * predecssor is the larget key of left child node
    */
   private borrowLargestKeyInNode() {
+    if (this.isPageWillUnderflow) {
+      return null;
+    }
+
     return this.recordKeys.pop();
   }
 
@@ -191,7 +252,25 @@ export class Page {
    * successor is the smallest key of right child node
    */
   private borrowSmallestKeyInNode() {
+    if (this.isPageWillUnderflow) {
+      return null;
+    }
     return this.recordKeys.shift();
+  }
+
+  private getAbsoluteParentIndex(queryKey: number) {
+    const index = this.getNextChildDirection(queryKey);
+
+    if (this.recordKeys.length <= index) {
+      return {
+        siblingIndex: index - 1,
+        direction: 'RIGHT',
+      } as const;
+    }
+    return {
+      siblingIndex: index + 1,
+      direction: 'LEFT',
+    } as const;
   }
 
   private getNextChildDirection(queryKey: number) {
@@ -215,6 +294,17 @@ export class Page {
     );
   }
 
+  public isPageUnderflow(numKeys: number) {
+    return numKeys < BTree.MinNumberOfKeysFormula(this._minimumDegree);
+  }
+
+  private get isPageWillUnderflow() {
+    return (
+      this.recordKeys.length <=
+      BTree.MinNumberOfKeysFormula(this._minimumDegree)
+    );
+  }
+
   public get getRecordKeys() {
     return this.recordKeys;
   }
@@ -227,11 +317,20 @@ export class Page {
     this.recordKeys = keys;
   }
 
+  public set deleteKeys(targetKey: number) {
+    const deletedKeys = deleteElementInArray({
+      baseLists: this.recordKeys,
+      targetValue: targetKey,
+    });
+
+    this.assignNewKeys = deletedKeys;
+  }
+
   public set assignNewChildren(children: Page[]) {
     this._children = children;
   }
 
-  private set appendNewRecordKeys(key: number) {
+  private set addKey(key: number) {
     this.recordKeys.push(key);
     /**
      * @todo: Need to change it into binary sort
@@ -295,6 +394,13 @@ export class BTree {
   static MaxNumberOfKeysFormula(degree: number) {
     const formula = (t: number) => {
       return 2 * t - 1;
+    };
+    return formula(degree);
+  }
+
+  static MinNumberOfKeysFormula(degree: number) {
+    const formula = (t: number) => {
+      return t - 1;
     };
     return formula(degree);
   }
