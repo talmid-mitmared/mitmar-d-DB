@@ -87,39 +87,171 @@ export class Page {
       queryKey,
     );
 
-    if (indexOfQueryInChild != null) {
-      if (queryChild.isLeaf) {
-        if (
+    const queryKeyFoundOnChild = indexOfQueryInChild != null;
+
+    const leafPageHasToBeDeleted = queryChild?.isLeaf && queryKeyFoundOnChild;
+
+    const internalPageHasToBeDeleted =
+      !queryChild?.isLeaf && queryKeyFoundOnChild;
+
+    // if (
+    //   leafPageHasToBeDeleted === false &&
+    //   queryChild.isPageUnderflow(queryChild.recordKeys.length)
+    // ) {
+    //   const { isUnderflows, indexToBorrow, baseIndex } =
+    //     this.isSiblingsAreUnderflow(queryKey);
+
+    //   if (isUnderflows) {
+    //     const parent = this.recordKeys.splice(baseIndex, 1);
+
+    //     const newPage = new Page(this._minimumDegree);
+
+    //     const es = this._children.splice(indexToBorrow, 1).pop();
+
+    //     newPage.assignNewKeys = newPage.recordKeys.concat(
+    //       queryChild.recordKeys,
+    //       parent,
+    //       es?.recordKeys,
+    //     );
+
+    //     newPage.assignNewChildren = newPage._children.concat(
+    //       es._children,
+    //       queryChild._children,
+    //     );
+
+    //     this._children.splice(indexToBorrow, 1, newPage);
+
+    //     parentNode?.Delete(queryKey, this);
+
+    //     return;
+    //   }
+    // }
+
+    if (leafPageHasToBeDeleted) {
+      if (
+        /**
+         * Since it is obvious that the the tree will be imbalanced, we have to borrow neighbor key to make it balanced
+         */
+        queryChild.treeWillUnbalanced
+      ) {
+        const {
+          isUnderflows: isSiblingsUnderflows,
+          indexToBorrow,
+          baseIndex,
+        } = this.isSiblingsAreUnderflow(queryKey);
+
+        /**
+         * If both left and right siblings contain only the minimum number of elements
+         */
+        if (isSiblingsUnderflows) {
+          const newPage = new Page(this._minimumDegree);
+          const targetChild = this._children[baseIndex];
+
+          const extractedParentKey = this.extractKeyFromNode(baseIndex);
+
+          if (extractedParentKey == null) return;
+
           /**
-           * Since it is obvious that the the tree will be imbalanced, we have to borrow neighbor key to make it balanced
+           * create a new leaf node by combining the two leaf nodes (target+left or
+           * target+right) and the intervening element of the parent node
            */
-          queryChild.treeWillUnbalanced
+          targetChild.addKey = extractedParentKey;
+          targetChild.deleteKeys = queryKey;
+
+          const siblingsKeysForMerge = this.extractChildFromNode(indexToBorrow);
+          const targetKeysForMerge = this.extractChildFromNode(baseIndex);
+
+          if (siblingsKeysForMerge == null || targetKeysForMerge == null)
+            return;
+
+          newPage.assignNewKeys = newPage.recordKeys.concat(
+            siblingsKeysForMerge.recordKeys,
+            targetKeysForMerge?.recordKeys,
+          );
+
+          this._children.splice(baseIndex, 1, newPage);
+
+          parentNode?.Delete(queryKey, this);
+
+          return;
+        } else if (
+          /**
+           * If the leaf node does not contain the minimum number elements,
+           * then fill the node by taking an element either from the left or from the right sibling
+           */
+          isSiblingsUnderflows === false
         ) {
-          const { borrowedKey, borrowedIndex } =
-            this.borrowKeyFromChild(nextChildIndex);
+          /**
+           *
+           * If the current page is right direction of parent page, borrow predecssor from left sibling,
+           * else if current page is left direction of parent page, borrow successor from right sibling
+           */
+          const keyToBorrow = {
+            RIGHT: () =>
+              this._children[indexToBorrow]?.borrowLargestKeyInNode() ?? null,
+            LEFT: () =>
+              this._children[indexToBorrow]?.borrowSmallestKeyInNode() ?? null,
+          };
 
-          const baseKey = this.recordKeys[indexOfQueryInChild];
+          const direction = this.getRelativeDirection(nextChildIndex);
 
-          this._children[borrowedIndex].addKey = baseKey;
+          const borrowedKey = keyToBorrow[direction]();
 
-          this.recordKeys[indexOfQueryInChild] = borrowedKey;
+          this.replaceElementToChildElement(
+            baseIndex,
+            nextChildIndex,
+            borrowedKey,
+          );
         }
-      } else {
-        const { borrowedKey } = queryChild.borrowKeyFromChild(nextChildIndex);
-
-        if (borrowedKey == null) return;
-
-        queryChild.addKey = borrowedKey;
       }
+      this._children[nextChildIndex].deleteKeys = queryKey;
+
+      return;
+    }
+
+    if (internalPageHasToBeDeleted) {
+      const { borrowedKey } = queryChild.borrowKeyFromChild(nextChildIndex);
+      if (borrowedKey == null) return;
+      queryChild.addKey = borrowedKey;
 
       this._children[nextChildIndex].deleteKeys = queryKey;
 
       return;
     }
 
-    this._children[nextChildIndex]?.Delete(queryKey, this);
+    queryChild?.Delete(queryKey, this);
   }
 
+  private replaceElementToChildElement(
+    indexToReplace: number,
+    childIndexToInsert: number,
+    elementToReplace: number | null,
+  ) {
+    if (elementToReplace == null) return;
+    /**
+     * Pull down the suitable (intervening)
+     * element from the parent node to replace the deleted element
+     */
+    const baseKey = this.recordKeys[indexToReplace];
+    this._children[childIndexToInsert].addKey = baseKey;
+    /**
+     * Push its smallest key into its parent’s node
+     */
+    this.recordKeys[indexToReplace] = elementToReplace;
+  }
+
+  private extractChildFromNode(index: number) {
+    return this._children.splice(index, 1).shift() ?? null;
+  }
+
+  private getRelativeDirection(index: number) {
+    return index === this.recordKeys.length
+      ? ('RIGHT' as const)
+      : ('LEFT' as const);
+  }
+  private extractKeyFromNode(index: number) {
+    return this.recordKeys.splice(index, 1).shift() ?? null;
+  }
   /**
    * The B-Tree will be Unbalanced if the node key length is less or equal to 0 after deletion
    */
@@ -144,38 +276,6 @@ export class Page {
 
     parentNode.assignNewChildren = newChildren;
     parentNode.addKey = primaryKey;
-  }
-
-  // Splits this node into two new nodes and returns left/right + promoted middle key
-  private splitOperationV2(index: number) {
-    const primaryKey = this.recordKeys[index];
-
-    /**
-     * When promoting a key, we must also consider splitting the child nodes.
-     * The children are divided into left and right groups corresponding to the split.
-     */
-    const { left: leftChildren, right: rightChildren } =
-      Page.SliceArrayIntoLeftRight(this._children, index + 1);
-
-    const leftKeys = sliceArrayToTargetIndex({
-      lists: this.recordKeys,
-      destIndex: index,
-    });
-
-    const rightKeys = sliceArrayToTargetIndex({
-      lists: this.recordKeys,
-      startIndex: index + 1,
-      destIndex: this.recordKeys.length,
-    });
-
-    const leftPage = new Page(this._minimumDegree, leftKeys, leftChildren);
-    const rightPage = new Page(this._minimumDegree, rightKeys, rightChildren);
-
-    return {
-      leftPage,
-      rightPage,
-      primaryKey,
-    };
   }
 
   // Splits this node into two new nodes and returns left/right + promoted middle key
@@ -237,6 +337,55 @@ export class Page {
     } as const;
   }
 
+  private isSiblingsAreUnderflow(queryKey: number) {
+    const { leftSiblingIndex, rightSiblingIndex, baseIndex } =
+      this.getAbsolutePageToBorrow(queryKey);
+
+    const leftSiblingsWillUnderflows =
+      this._children[leftSiblingIndex].treeWillUnbalanced;
+
+    const rightSiblingsWillUnderflows =
+      this._children[rightSiblingIndex].treeWillUnbalanced;
+
+    if (leftSiblingsWillUnderflows && rightSiblingsWillUnderflows) {
+      const indexToBorrow =
+        baseIndex === rightSiblingIndex ? leftSiblingIndex : rightSiblingIndex;
+
+      return {
+        isUnderflows: true,
+        indexToBorrow,
+        baseIndex,
+      };
+    }
+
+    if (leftSiblingsWillUnderflows && !rightSiblingsWillUnderflows) {
+      return {
+        isUnderflows: false,
+        indexToBorrow: rightSiblingIndex,
+        baseIndex,
+      };
+    }
+
+    return {
+      isUnderflows: false,
+      indexToBorrow: leftSiblingIndex,
+      baseIndex,
+    };
+  }
+
+  private getAbsolutePageToBorrow(queryKey: number) {
+    const index = this.getNextChildDirection(queryKey);
+
+    const baseIndex = index === this.recordKeys.length ? index - 1 : index;
+
+    return {
+      leftSiblingIndex:
+        this._children?.[baseIndex - 1] != null ? baseIndex - 1 : baseIndex,
+      baseIndex,
+      rightSiblingIndex:
+        this._children?.[baseIndex + 1] != null ? baseIndex + 1 : baseIndex,
+    };
+  }
   /**
    * predecssor is the larget key of left child node
    */
