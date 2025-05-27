@@ -94,38 +94,18 @@ export class Page {
     const internalPageHasToBeDeleted =
       !queryChild?.isLeaf && queryKeyFoundOnChild;
 
-    // if (
-    //   leafPageHasToBeDeleted === false &&
-    //   queryChild.isPageUnderflow(queryChild.recordKeys.length)
-    // ) {
-    //   const { isUnderflows, indexToBorrow, baseIndex } =
-    //     this.isSiblingsAreUnderflow(queryKey);
+    if (
+      leafPageHasToBeDeleted === false &&
+      queryChild.isPageUnderflow(queryChild.recordKeys.length)
+    ) {
+      const isSiblingsUnderflows = this.borrowFromParentAndMerge(queryKey);
 
-    //   if (isUnderflows) {
-    //     const parent = this.recordKeys.splice(baseIndex, 1);
+      if (isSiblingsUnderflows) {
+        parentNode?.Delete(queryKey, this);
 
-    //     const newPage = new Page(this._minimumDegree);
-
-    //     const es = this._children.splice(indexToBorrow, 1).pop();
-
-    //     newPage.assignNewKeys = newPage.recordKeys.concat(
-    //       queryChild.recordKeys,
-    //       parent,
-    //       es?.recordKeys,
-    //     );
-
-    //     newPage.assignNewChildren = newPage._children.concat(
-    //       es._children,
-    //       queryChild._children,
-    //     );
-
-    //     this._children.splice(indexToBorrow, 1, newPage);
-
-    //     parentNode?.Delete(queryKey, this);
-
-    //     return;
-    //   }
-    // }
+        return;
+      }
+    }
 
     if (leafPageHasToBeDeleted) {
       if (
@@ -144,32 +124,9 @@ export class Page {
          * If both left and right siblings contain only the minimum number of elements
          */
         if (isSiblingsUnderflows) {
-          const newPage = new Page(this._minimumDegree);
-          const targetChild = this._children[baseIndex];
+          this._children[nextChildIndex].deleteKeys = queryKey;
 
-          const extractedParentKey = this.extractKeyFromNode(baseIndex);
-
-          if (extractedParentKey == null) return;
-
-          /**
-           * create a new leaf node by combining the two leaf nodes (target+left or
-           * target+right) and the intervening element of the parent node
-           */
-          targetChild.addKey = extractedParentKey;
-          targetChild.deleteKeys = queryKey;
-
-          const siblingsKeysForMerge = this.extractChildFromNode(indexToBorrow);
-          const targetKeysForMerge = this.extractChildFromNode(baseIndex);
-
-          if (siblingsKeysForMerge == null || targetKeysForMerge == null)
-            return;
-
-          newPage.assignNewKeys = newPage.recordKeys.concat(
-            siblingsKeysForMerge.recordKeys,
-            targetKeysForMerge?.recordKeys,
-          );
-
-          this._children.splice(baseIndex, 1, newPage);
+          this.borrowFromParentAndMerge(queryKey);
 
           parentNode?.Delete(queryKey, this);
 
@@ -188,12 +145,12 @@ export class Page {
            */
           const keyToBorrow = {
             RIGHT: () =>
-              this._children[indexToBorrow]?.borrowLargestKeyInNode() ?? null,
-            LEFT: () =>
               this._children[indexToBorrow]?.borrowSmallestKeyInNode() ?? null,
+            LEFT: () =>
+              this._children[indexToBorrow]?.borrowLargestKeyInNode() ?? null,
           };
 
-          const direction = this.getRelativeDirection(nextChildIndex);
+          const direction = nextChildIndex <= indexToBorrow ? 'RIGHT' : 'LEFT';
 
           const borrowedKey = keyToBorrow[direction]();
 
@@ -222,6 +179,49 @@ export class Page {
     queryChild?.Delete(queryKey, this);
   }
 
+  private borrowFromParentAndMerge(queryKey: number) {
+    const {
+      isUnderflows: isSiblingsUnderflows,
+      indexToBorrow,
+      baseIndex,
+    } = this.isSiblingsAreUnderflow(queryKey);
+
+    if (isSiblingsUnderflows) {
+      const newPage = new Page(this._minimumDegree);
+      const targetChild = this._children[baseIndex];
+
+      const extractedParentKey = this.extractKeyFromNode(baseIndex);
+
+      if (extractedParentKey == null) return;
+
+      /**
+       * create a new leaf node by combining the two leaf nodes (target+left or
+       * target+right) and the intervening element of the parent node
+       */
+      targetChild.addKey = extractedParentKey;
+      targetChild.deleteKeys = queryKey;
+
+      const siblingsKeysForMerge = this.extractChildFromNode(indexToBorrow);
+      const targetKeysForMerge = this.extractChildFromNode(baseIndex);
+
+      if (siblingsKeysForMerge == null || targetKeysForMerge == null) return;
+
+      newPage.assignNewKeys = newPage.recordKeys.concat(
+        targetKeysForMerge.recordKeys,
+
+        siblingsKeysForMerge?.recordKeys,
+      );
+
+      newPage.assignNewChildren = newPage._children.concat(
+        targetKeysForMerge._children,
+        siblingsKeysForMerge._children,
+      );
+
+      this._children.splice(baseIndex, 0, newPage);
+    }
+    return isSiblingsUnderflows;
+  }
+
   private replaceElementToChildElement(
     indexToReplace: number,
     childIndexToInsert: number,
@@ -234,10 +234,12 @@ export class Page {
      */
     const baseKey = this.recordKeys[indexToReplace];
     this._children[childIndexToInsert].addKey = baseKey;
+
     /**
      * Push its smallest key into its parent’s node
      */
     this.recordKeys[indexToReplace] = elementToReplace;
+    this.recordKeys.sort((a, b) => a - b);
   }
 
   private extractChildFromNode(index: number) {
@@ -245,7 +247,7 @@ export class Page {
   }
 
   private getRelativeDirection(index: number) {
-    return index === this.recordKeys.length
+    return index >= this.recordKeys.length
       ? ('RIGHT' as const)
       : ('LEFT' as const);
   }
@@ -316,7 +318,7 @@ export class Page {
     const rightDirection = baseParentIndex >= this.recordKeys.length;
 
     const isRightChildWillUnbalanced =
-      rightDirection === true && queryChild.treeWillUnbalanced;
+      rightDirection === true && queryChild?.treeWillUnbalanced;
 
     const leftChildIndex = baseParentIndex - 1;
     const rightChildIndex = baseParentIndex;
@@ -376,11 +378,16 @@ export class Page {
   private getAbsolutePageToBorrow(queryKey: number) {
     const index = this.getNextChildDirection(queryKey);
 
-    const baseIndex = index === this.recordKeys.length ? index - 1 : index;
+    const baseIndex =
+      index === this.recordKeys.length
+        ? index - 1
+        : index === 0
+          ? index
+          : index - 1;
 
     return {
       leftSiblingIndex:
-        this._children?.[baseIndex - 1] != null ? baseIndex - 1 : baseIndex,
+        this._children?.[baseIndex] != null ? baseIndex : baseIndex,
       baseIndex,
       rightSiblingIndex:
         this._children?.[baseIndex + 1] != null ? baseIndex + 1 : baseIndex,
@@ -530,7 +537,6 @@ export class BTree {
 
   public Delete(queryKey: number) {
     const queryFounded = this.root.Search(queryKey);
-
     if (queryFounded) {
       this.root.Delete(queryKey);
     }
