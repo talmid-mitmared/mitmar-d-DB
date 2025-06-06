@@ -7,101 +7,103 @@
  * @tsdoc
  */
 
-import { getNextPageIndex } from '../index-utils';
-import { $IteratorNode, createIteratorNode } from './IteratorMetadata';
-import { PageCore, RecordKey } from './Pages';
-import { $PageNode } from './revised';
-import { Iterator } from './types';
-import { findTargetIndexInLists } from './utils';
+import { $IteratorNode, createIteratorNode } from './IteratorNode';
 
-export interface IBtreeIterator
-  extends Omit<Iterator<RecordKey>, 'next' | 'current'> {
-  next(page: PageCore, queryKey: RecordKey): number | null;
-  current(): number | null;
+export interface Iterator {
+  /**
+   * Returns the current index within the node.
+   * May return `null` if traversal hasn't begun or failed.
+   */
+  current(): $IteratorNode['index'];
+
+  /**
+   * Advances the iterator and returns the new index position.
+   */
+  next(): $IteratorNode['index'];
+
+  /**
+   * Returns the key or value at the current index.
+   */
+  value(): $IteratorNode['value'];
+}
+
+export interface Aggregator {
+  getIterator(): Iterator;
 }
 
 /**
- * Implements an iterator for traversing a B-tree structure.
- * Maintains internal state across calls using `$IteratorNode`.
- * This hasn;t to be only for b tree
+ * Generic iterator for tree-like structures (e.g. B-trees, tries).
+ *
+ * Delegates the traversal logic to an injected search function,
+ * enabling pluggable traversal semantics (e.g. binary search, DFS).
+ *
+ * Maintains state using a `$IteratorNode`, which encapsulates:
+ * - position (depth level)
+ * - index (current key/child index)
+ * - value (last visited key)
+ * - last (traversal end flag)
  */
-export class BtreeIterator implements IBtreeIterator {
+export class TreeIterator implements Iterator {
   #iteratorNode: $IteratorNode;
 
-  constructor(iteratorNode?: $IteratorNode) {
+  /**
+   * Search strategy injected at construction.
+   * Must be bound to the iterator node via `this`.
+   */
+  #search: (this: $IteratorNode) => void;
+
+  constructor(
+    search: (this: $IteratorNode) => void,
+    iteratorNode?: $IteratorNode,
+  ) {
     this.#iteratorNode = iteratorNode ?? createIteratorNode();
+    this.#search = search;
   }
 
   /**
-   * Returns the current index of the traversal.
+   * Returns the current index within the node.
+   * Does not mutate state.
    */
   current(): number | null {
     return this.#iteratorNode.index;
   }
 
+  /**
+   * Returns the key or value at the current traversal index.
+   */
   value(): number | null {
     return this.#iteratorNode.value;
   }
 
+  /**
+   * Returns the current depth level of the traversal.
+   */
   offset(): number | null {
     return this.#iteratorNode.position;
   }
 
   /**
-   * Attempts to search the given page for a query key.
-   * If the key exists, its index is stored. Otherwise, determines the next child index to descend into.
+   * Advances traversal by invoking the search strategy.
+   * Delegates mutation of internal state to the search implementation.
    *
-   * @param page - The current B-tree page to search.
-   * @param queryKey - The target key to search for.
-   * @returns The index of the child to visit next, or `null` if traversal should stop.
+   * @returns Updated index after advancing, or `null` if end reached.
    */
-  next(page: $PageNode<number>, queryKey: RecordKey): number | null {
-    search.call(this.#iteratorNode, page, queryKey);
-
+  next(): number | null {
+    this.#search.call(this.#iteratorNode);
     return this.#iteratorNode.index;
   }
 
-  end() {
-    if (this.#iteratorNode.last) {
-      return true;
-    }
-
-    return false;
+  /**
+   * Checks if traversal has reached a terminal leaf node
+   * or a condition where no further movement is possible.
+   *
+   * @returns `true` if traversal is complete.
+   */
+  end(): boolean {
+    return this.#iteratorNode.last;
   }
 }
 
-/**
- * Performs a single-step traversal in the B-tree to locate the given key
- * or determine the next child index to descend into.
- *
- * This function does not recurse; it updates the iterator node state
- * for one level based on the current page and query key.
- *
- * @param this - The iterator node (`$IteratorNode`) maintaining traversal state.
- * @param page - The current B-tree page to search.
- * @param queryKey - The key to search for.
- * @returns The updated iterator node after this traversal step.
- */
-export function search<T>(
-  this: $IteratorNode,
-  page: $PageNode<T>,
-  queryKey: T,
-): $IteratorNode {
-  const indexOfQueryKey = findTargetIndexInLists(page.recordKeys, queryKey);
-
-  if (indexOfQueryKey != null) {
-    this.index = indexOfQueryKey;
-    this.value = page.recordKeys[this.index] as number;
-    return this;
-  }
-
-  const nextIndex = getNextPageIndex(page.recordKeys, queryKey);
-
-  this.index = nextIndex;
-
-  return this;
-}
-
-export function getIterator() {
-  return new BtreeIterator();
+export function getIterator(search: (this: $IteratorNode) => void) {
+  return new TreeIterator(search);
 }

@@ -11,7 +11,7 @@
  * Represents internal traversal metadata used by a B-tree iterator.
  * @todo Need to abstract more when another tree comes
  */
-export type $IteratorMetadata = {
+export type $IteratorNode = {
   /**
    * Tracks the current depth within the B-tree.
    * Root starts at 0; increments as we descend.
@@ -38,24 +38,24 @@ export type $IteratorMetadata = {
 };
 
 /**
- * Constructs a new `$IteratorMetadata` object from an optional base state.
+ * Constructs a new `$IteratorNode` object from an optional base state.
  * Ensures fallback to default values when fields are missing.
  */
-function createIteratorMetadataImplObject(
-  iteratorMetadata?: $IteratorMetadata,
-): $IteratorMetadata {
-  const metadata: $IteratorMetadata = {
+function createIteratorNodeImplObject(
+  iteratorNode?: $IteratorNode,
+): $IteratorNode {
+  const metadata: $IteratorNode = {
     position: 0,
     index: null,
     value: null,
     last: false,
   };
 
-  if (iteratorMetadata != null) {
-    metadata.position = iteratorMetadata.position;
-    metadata.index = iteratorMetadata.index;
-    metadata.last = iteratorMetadata.last;
-    metadata.value = iteratorMetadata.value;
+  if (iteratorNode != null) {
+    metadata.position = iteratorNode.position;
+    metadata.index = iteratorNode.index;
+    metadata.last = iteratorNode.last;
+    metadata.value = iteratorNode.value;
   }
 
   return metadata;
@@ -65,6 +65,6 @@ function createIteratorMetadataImplObject(
 // Currently hardcoded as false to enforce function-only implementation.
 const classImpl = false as const;
 
-export const createIteratorMetadata = !classImpl
-  ? createIteratorMetadataImplObject
-  : null;
+export const createIteratorNode = !classImpl
+  ? createIteratorNodeImplObject
+  : createIteratorNodeImplObject;

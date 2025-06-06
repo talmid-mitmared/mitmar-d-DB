@@ -3,7 +3,7 @@ import {
   findIndexToInsertKey,
   getNextChildIndexForTraverse,
 } from './index-utils';
-import { divideListsIntoHalf } from './b-tree/utils';
+import { divideListsIntoHalf } from './b-tree/utils/array';
 
 export function insert(
   page: PageCore,

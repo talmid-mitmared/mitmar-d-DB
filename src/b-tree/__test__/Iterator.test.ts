@@ -1,24 +1,42 @@
-import { BtreeIterator } from '../Iterator';
-import { PageCore } from '../Pages';
+import { getIterator } from '../Iterator';
+import { $BtPage, createBtreePage } from '../Page';
+import { searchInIterator } from '../Search';
 
 describe('B-tree Iterator', () => {
   const MINIMUM_DEGREE = 2 as const;
 
-  let root: PageCore;
-  let leaf1: PageCore, leaf2: PageCore, leaf3: PageCore;
+  let root: $BtPage;
 
   beforeEach(() => {
-    leaf1 = new PageCore(MINIMUM_DEGREE, [5, 10]);
-    leaf2 = new PageCore(MINIMUM_DEGREE, [20, 25]);
-    leaf3 = new PageCore(MINIMUM_DEGREE, [35, 40]);
-    root = new PageCore(MINIMUM_DEGREE, [15, 30], [leaf1, leaf2, leaf3]);
+    root = createBtreePage({
+      recordKeys: [15, 30],
+      children: [
+        createBtreePage({
+          recordKeys: [5, 10],
+          children: [],
+          minimumDegree: MINIMUM_DEGREE,
+        }),
+        createBtreePage({
+          recordKeys: [20, 25],
+          children: [],
+          minimumDegree: MINIMUM_DEGREE,
+        }),
+        createBtreePage({
+          recordKeys: [35, 40],
+          children: [],
+          minimumDegree: MINIMUM_DEGREE,
+        }),
+      ],
+      minimumDegree: MINIMUM_DEGREE,
+    });
   });
 
   it('should return correct index if key is found in root page', () => {
-    const iterator = new BtreeIterator();
     const queryKey = 15 as const;
+    const searchFn = searchInIterator(root, queryKey);
+    const iterator = getIterator(searchFn);
 
-    const index = iterator.next(root, queryKey);
+    const index = iterator.next();
 
     expect(index).toBe(0);
     expect(iterator.value()).toBe(queryKey);
@@ -27,18 +45,18 @@ describe('B-tree Iterator', () => {
   });
 
   it('should return correct index if key is found in child leftmost page', () => {
-    const iterator = new BtreeIterator();
     const queryKey = 10 as const;
 
-    const childIndex = iterator.next(root, queryKey);
+    const searchFn = searchInIterator(root, queryKey);
+    const iterator = getIterator(searchFn);
+
+    const childIndex = iterator.next();
 
     expect(childIndex).toBe(0);
     expect(iterator.value()).toBe(null);
     expect(iterator.current()).toEqual(childIndex);
 
-    const child = root.children[childIndex as number];
-
-    const targetIndex = iterator.next(child, queryKey);
+    const targetIndex = iterator.next();
 
     expect(targetIndex).toBe(1);
     expect(iterator.value()).toBe(queryKey);
@@ -47,18 +65,17 @@ describe('B-tree Iterator', () => {
   });
 
   it('should return correct index if key is found in child middle page', () => {
-    const iterator = new BtreeIterator();
     const queryKey = 20 as const;
+    const searchFn = searchInIterator(root, queryKey);
+    const iterator = getIterator(searchFn);
 
-    const childIndex = iterator.next(root, queryKey);
+    const childIndex = iterator.next();
 
     expect(childIndex).toBe(1);
     expect(iterator.value()).toBe(null);
     expect(iterator.current()).toEqual(childIndex);
 
-    const child = root.children[childIndex as number];
-
-    const targetIndex = iterator.next(child, queryKey);
+    const targetIndex = iterator.next();
 
     expect(targetIndex).toBe(0);
     expect(iterator.value()).toBe(queryKey);
@@ -67,17 +84,17 @@ describe('B-tree Iterator', () => {
   });
 
   it('should return correct index if key is found in child rightmost page', () => {
-    const iterator = new BtreeIterator();
     const queryKey = 35 as const;
+    const searchFn = searchInIterator(root, queryKey);
+    const iterator = getIterator(searchFn);
 
-    const childIndex = iterator.next(root, queryKey);
+    const childIndex = iterator.next();
 
     expect(childIndex).toBe(2);
     expect(iterator.value()).toBe(null);
     expect(iterator.current()).toEqual(childIndex);
 
-    const child = root.children[childIndex as number];
-    const targetIndex = iterator.next(child, queryKey);
+    const targetIndex = iterator.next();
 
     expect(targetIndex).toBe(0);
     expect(iterator.value()).toBe(queryKey);
@@ -86,19 +103,22 @@ describe('B-tree Iterator', () => {
   });
 
   it('should return correct child index if key is not in page', () => {
-    const iterator = new BtreeIterator();
+    const searchFn = searchInIterator(root, 22);
+    const iterator = getIterator(searchFn);
 
-    const index = iterator.next(root, 22);
+    const index = iterator.next();
+
     expect(index).toBe(1);
     expect(iterator.value()).toBe(null);
     expect(iterator.current()).toBe(1);
   });
 
   it('should return null when reaching a leaf and key not found', () => {
-    const iterator = new BtreeIterator();
+    const searchFn = searchInIterator(root, 22);
+    const iterator = getIterator(searchFn);
 
-    const childIndex = iterator.next(root, 22);
-    iterator.next(root.children[childIndex!] as PageCore, 22);
+    iterator.next();
+    iterator.next();
 
     expect(iterator.value()).toBe(null);
   });

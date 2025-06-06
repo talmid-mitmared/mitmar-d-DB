@@ -8,28 +8,81 @@
  */
 
 import { getIterator } from './Iterator';
-import { PageCore, RecordKey } from './Pages';
+import { $IteratorNode } from './IteratorNode';
+import { $BtPage, RecordKey } from './Page';
+import { findTargetIndexInLists } from './utils/array';
+import { getNextPageIndex } from './utils/page';
 
-export function searchAll(page: PageCore, queryKey: RecordKey): number | null {
-  const iterator = getIterator();
+/**
+ * Recursively searches for the target key in a B-tree-like structure.
+ *
+ * This is a full traversal algorithm that descends through children
+ * until a matching key is found or a terminal leaf is reached.
+ *
+ */
+export function searchAll(page: $BtPage, queryKey: RecordKey): number | null {
+  const searchFn = searchInIterator(page, queryKey);
+  const iterator = getIterator(searchFn);
 
-  const nexIndex = iterator.next(page, queryKey);
+  const nextIndex = iterator.next();
 
+  // Match found in current page — early return.
   if (iterator.value() === queryKey) {
     return iterator.value();
   }
 
-  const nextPage = page.children[nexIndex ?? 0];
+  if (nextIndex == null) return null;
 
+  // Descend into the appropriate child page.
+  const nextPage = page.children[nextIndex];
+
+  // Reached a leaf node or invalid child reference.
   if (nextPage == null) return null;
 
   return searchAll(nextPage, queryKey);
 }
 
-export function search(page: PageCore, queryKey: RecordKey): number | null {
-  const iterator = getIterator();
+/**
+ * One-shot search for the target key at a single tree level.
+ * Does not recurse — useful for shallow scans or root-only lookups.
+ */
+export function search(
+  this: $IteratorNode,
+  page: $BtPage,
+  queryKey: RecordKey,
+): number | null {
+  const searchFn = searchInIterator(page, queryKey);
+  const iterator = getIterator(searchFn);
 
-  iterator.next(page, queryKey);
+  iterator.next();
 
-  return iterator.value();
+  if (iterator.value() === queryKey) {
+    return iterator.value();
+  }
+
+  return null;
+}
+
+/**
+ * Builds a `search` function compatible with the `TreeIterator`.
+ *
+ * Mutates the iterator node (`this`) to reflect the search result:
+ * - If the key exists, sets `.index` and `.value`.
+ * - Otherwise, computes the appropriate child index to descend into.
+ */
+export function searchInIterator(page: $BtPage, queryKey: RecordKey) {
+  return function (this: $IteratorNode) {
+    const targetIndex = findTargetIndexInLists(page.recordKeys, queryKey);
+
+    // Exact match found in the current page.
+    if (targetIndex != null) {
+      this.index = targetIndex;
+      this.value = page.recordKeys[this.index] as number;
+      return this;
+    }
+
+    // Key not found — calculate which child to follow.
+    const nextIndex = getNextPageIndex(page.recordKeys, queryKey);
+    this.index = nextIndex;
+  };
 }

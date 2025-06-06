@@ -4,7 +4,7 @@ import {
   PrimaryKeyIndexFormula,
 } from './b-tree/b-tree';
 import { PrimitivePage } from './b-tree/primitive';
-import { insertElementInLists } from './b-tree/utils';
+import { insertElementInLists } from './b-tree/utils/array';
 
 type RecordKey = number;
 type RecordKeys = RecordKey[];

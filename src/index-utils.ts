@@ -1,5 +1,5 @@
 import { PageCore, RecordKey, RecordKeys } from './b-tree/Pages';
-import { insertElementInLists } from './b-tree/utils';
+import { insertElementInLists } from './b-tree/utils/array';
 
 export function getNextIndexForTraverse(page: PageCore, query: RecordKey) {
   const index = page.recordKeys.findIndex((element) => query < element);

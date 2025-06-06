@@ -3,7 +3,7 @@ import {
   divideListsIntoHalf,
   getSubListsOfOrigin,
   insertElementInLists,
-} from './b-tree/utils';
+} from './b-tree/utils/array';
 
 function getNextChildIndexForTraverse(page: PageCore, query: RecordKey) {
   if (page.isPageLeaf()) {

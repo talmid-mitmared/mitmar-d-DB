@@ -1,7 +1,7 @@
 import { getNextPageIndex } from '../index-utils';
 import { getIterator } from './Iterator';
 import { $PageNode, createPageNodeImplObject } from './revised';
-import { divideListsIntoHalf } from './utils';
+import { divideListsIntoHalf } from './utils/array';
 export function isPageLeaf(childrenLength: number): boolean {
   return childrenLength === 0;
 }

@@ -2,7 +2,7 @@ import {
   MaxNumberOfKeysFormula,
   MinNumberOfKeysFormula,
   PrimaryKeyIndexFormula,
-} from './tree-utils';
+} from './utils/tree';
 
 export type RecordKey = number;
 
@@ -46,4 +46,6 @@ function createBtreePageImplObject(returnBPage: $BtPage): $BtPage {
 // Currently hardcoded as false to enforce function-only implementation.
 const classImpl = false as const;
 
-export const createBtreePage = !classImpl ? createBtreePageImplObject : null;
+export const createBtreePage = !classImpl
+  ? createBtreePageImplObject
+  : createBtreePageImplObject;
