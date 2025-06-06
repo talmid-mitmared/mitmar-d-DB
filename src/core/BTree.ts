@@ -246,11 +246,6 @@ export class Page {
     return this._children.splice(index, 1).shift() ?? null;
   }
 
-  private getRelativeDirection(index: number) {
-    return index >= this.recordKeys.length
-      ? ('RIGHT' as const)
-      : ('LEFT' as const);
-  }
   private extractKeyFromNode(index: number) {
     return this.recordKeys.splice(index, 1).shift() ?? null;
   }

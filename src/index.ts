@@ -46,42 +46,57 @@ function printBTree(node: Page, prefix = '', isTail = true) {
   }
 }
 
-const btree = new BTree(2);
+const btree = new BTree(3);
+const btree2 = new BTree(3);
 
-[10, 20, 5, 6, 12, 30, 7, 17, 18, 19, 21, 22].forEach((val) => {
+[
+  108, 151, 243, 256, 333, 450, 36, 45, 72, 79, 63, 81, 90, 101, 111, 114, 117,
+].forEach((val) => {
+  btree2.Insert(val);
+});
+
+[
+  108, 151, 243, 256, 333, 450, 36, 45, 72, 79, 63, 81, 90, 101, 111, 114, 117,
+].forEach((val) => {
   btree.Insert(val);
 });
 
-btree.Delete(7);
+btree2.Delete(81);
+btree2.Delete(79);
+btree2.Delete(101);
+btree2.Delete(108);
+btree2.Delete(256);
+btree.Delete(333);
+
+btree.Delete(81);
+btree.Delete(79);
+btree.Delete(101);
+btree.Delete(108);
+btree.Delete(256);
+btree.Delete(333);
+btree.Delete(243);
+
+// const btree3 = new BTree(3);
+// [
+//   9, 24, 26, 30, 43, 57, 63, 89, 101, 104, 121, 174, 231, 320, 323, 325, 351,
+//   352, 408, 421, 438, 442, 465, 557, 561, 577, 593, 604, 623, 645, 675, 682,
+//   687, 713, 715, 725, 760, 776, 788, 790, 797, 823, 836, 861, 899, 929, 943,
+//   947, 949, 991,
+// ].forEach((val) => {
+//   btree3.Insert(val);
+// });
+// console.log(printBTree(btree3.rootPage));
+
+// [687, 593, 111, 465, 352].forEach((val) => {
+//   btree3.Delete(val);
+// });
+
+// console.log(printBTree(btree3.rootPage));
 
 const dotCode = buildGraphviz(btree);
 
+console.log(printBTree(btree2.rootPage));
 console.log(printBTree(btree.rootPage));
-generateDotFromBTree(btree.rootPage);
-console.log(dotCode);
-// export function insertElementsInTargetIndex<T>({
-//   base,
-//   targetIndex,
-//   elementsToInsert,
-// }: {
-//   base: Array<T>;
-//   targetIndex: number;
-//   elementsToInsert: Array<T>;
-// }) {
-//   base.splice(targetIndex, 1, ...elementsToInsert);
-//   return base;
-// }
 
-// export function deleteElementInTargetIndex<T>({
-//   base,
-//   targetIndex,
-// }: {
-//   base: Array<T>;
-//   targetIndex: number;
-// }) {
-//   return insertElementsInTargetIndex<T>({
-//     base,
-//     targetIndex,
-//     elementsToInsert: [],
-//   });
-// }
+generateDotFromBTree(btree.rootPage);
+// console.log(dotCode);

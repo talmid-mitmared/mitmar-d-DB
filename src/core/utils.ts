@@ -14,12 +14,34 @@ export function sliceArrayToTargetIndex<T>({
 export function insertElementInArray<T>({
   baseLists,
   indexToInsert,
+  deleteCount = 1,
   elementsToInsert,
 }: {
   baseLists: Array<T>;
   indexToInsert: number;
+  deleteCount?: number;
   elementsToInsert: Array<T>;
 }) {
-  baseLists.splice(indexToInsert, 1, ...elementsToInsert);
+  baseLists.splice(indexToInsert, deleteCount, ...elementsToInsert);
   return baseLists;
+}
+
+export function deleteElementInArray<T>({
+  baseLists,
+  targetValue,
+}: {
+  baseLists: Array<T>;
+  targetValue: number;
+}) {
+  return baseLists.filter((element) => targetValue !== element);
+}
+
+export function findTargetIndex<T>(lists: Array<T>, targetValue: T) {
+  const index = lists?.findIndex((element) => targetValue === element);
+
+  if (index === -1) {
+    return null;
+  }
+
+  return index;
 }

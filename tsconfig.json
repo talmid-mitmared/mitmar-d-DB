@@ -10,7 +10,8 @@
     "moduleResolution": "bundler",
     "useDefineForClassFields": true,
     "allowImportingTsExtensions": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "target": "ES2017"
   },
   "include": ["src"]
 }
