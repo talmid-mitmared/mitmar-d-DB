@@ -1,5 +1,5 @@
 import { $BtPage, createBtreePage } from '../Page';
-import { search, searchAll } from '../SearchAction';
+import { searchInPage, searchInTree } from '../SearchOperation';
 
 describe('B-tree Iterator', () => {
   const MINIMUM_DEGREE = 2 as const;
@@ -32,7 +32,7 @@ describe('B-tree Iterator', () => {
 
   it('should return correct index if key is found in root page', () => {
     const queryKey = 15 as const;
-    const searchedValue = search(root, queryKey);
+    const searchedValue = searchInPage(root, queryKey);
 
     expect(searchedValue?.index).toBe(0);
     expect(searchedValue?.value).toBe(queryKey);
@@ -40,26 +40,26 @@ describe('B-tree Iterator', () => {
 
   it('should return correct index if key is found in child leftmost page', () => {
     const queryKey = 10 as const;
-    const value = searchAll(root, queryKey);
+    const value = searchInTree(root, queryKey);
     expect(value).toBe(queryKey);
   });
 
   it('should return correct index if key is found in child middle page', () => {
     const queryKey = 20 as const;
-    const value = searchAll(root, queryKey);
+    const value = searchInTree(root, queryKey);
     expect(value).toBe(queryKey);
   });
 
   it('should return correct index if key is found in child rightmost page', () => {
     const queryKey = 35 as const;
-    const value = searchAll(root, queryKey);
+    const value = searchInTree(root, queryKey);
     expect(value).toBe(queryKey);
   });
 
   it('should return null when reaching a leaf and key not found', () => {
     const queryKey = 222 as const;
 
-    const value = searchAll(root, queryKey);
+    const value = searchInTree(root, queryKey);
     expect(value).toBe(null);
   });
 });
