@@ -1,196 +1,107 @@
-import { deleteElementInLists, insertElementInLists } from '../utils/array';
-import { insertInPage } from './InsertOperation';
+import { deleteElementInLists } from '../utils/array';
 import {
-  $BtPage,
-  createBtreePage,
-  getPredecessorIndex,
-  getSucessorIndex,
-  isPageWillUnderflows,
-} from './Page';
+  balanceFromBorrowedSiblings,
+  balanceFromMergedSiblings,
+  isBothSiblingsWillUnderflows,
+} from './Balance';
+import { $BtPage, createBtreePage, isPageWillUnderflows } from './Page';
 import { searchInPage } from './SearchOperation';
 
-export function deleteInTree(queryKey: number, page: $BtPage) {
+/**
+ * Deletes a key from a B-tree while maintaining balance.
+ *
+ * Recursive deletion algorithm that supports:
+ * 1. Leaf deletions
+ * 2. Borrowing from siblings
+ * 3. Merging underflowed nodes
+ *
+ * The tree remains balanced at every level by rotating or merging when necessary.
+ *
+ * @param page - Current B-tree node (may be root or child)
+ * @param queryKey - The key to delete
+ * @param parentPage - Optional reference to parent node
+ * @returns Updated subtree rooted at `page`
+ */
+export function deleteInTree(
+  page: $BtPage,
+  queryKey: number,
+  parentPage?: $BtPage,
+): $BtPage {
   const { index, end, value } = searchInPage(page, queryKey);
 
-  if (value == null && end) {
+  // Case 1: Key not found and reached leaf — no further traversal
+  if (value !== queryKey && end) {
     return page;
   }
 
-  const nextPage = page.children[index ?? -1];
+  // Case 2: Key not found yet, but node has children — descend
+  if (value !== queryKey && !end && index != null) {
+    deleteInTree(page.children[index], queryKey, page);
+    return page;
+  }
 
-  if (nextPage == null) return page;
+  /**
+   * Case 3: Match found on leaf node
+   * This means we can safely delete the key without restructuring (yet)
+   */
+  const isLeafOperation = end && value === queryKey;
 
-  const nextSearchResult = searchInPage(nextPage, queryKey);
+  // Case 4: Leaf node deletion that may cause underflow
+  if (
+    isLeafOperation &&
+    isPageWillUnderflows(page) // Checks if page will be below minimum key count
+  ) {
+    const canBorrow =
+      isBothSiblingsWillUnderflows(queryKey, parentPage) === false;
 
-  const leafOperation = isLeafOperation({ ...nextSearchResult, queryKey });
+    // Case 4a: Borrow from left or right sibling
+    if (canBorrow && parentPage) {
+      const updatedPage = balanceFromBorrowedSiblings(queryKey, parentPage);
 
-  const internalOperation = isInternalOperation({
-    ...nextSearchResult,
-    queryKey,
-  });
+      const { index: nextIndex } = searchInPage(updatedPage, queryKey);
 
-  const { rightSiblingIndex, leftSiblingIndex, baseIndex } =
-    getChildSiblingIndexs(page, queryKey);
+      if (nextIndex == null) return updatedPage;
 
-  // Step 1: If a leaf node has to be deleted
-  if (leafOperation) {
-    // Step 2: If the leaf node does not contain the minimum number elements
-    if (isPageWillUnderflows(nextPage)) {
-      const isNotAbleToBorrowFromSiblings =
-        isSiblingWillUnderflows(page, rightSiblingIndex) &&
-        isSiblingWillUnderflows(page, leftSiblingIndex);
+      deleteInTree(updatedPage.children[nextIndex], queryKey, updatedPage);
 
-      const isAbleToBorrowFromSiblings = !isNotAbleToBorrowFromSiblings;
+      return page;
+    }
 
-      // Step 3: Fill the node by taking an element either from the left or from the right sibling
-      if (isAbleToBorrowFromSiblings && baseIndex != null) {
-        const lenderPage = borrowFromChildren(
-          leftSiblingIndex,
-          rightSiblingIndex,
-          page,
-        );
+    // Case 4b: Both siblings too small — merge with one sibling and pull key from parent
+    if (!canBorrow && parentPage) {
+      const updatedPage = balanceFromMergedSiblings(queryKey, parentPage);
 
-        const result = borrowFromParent(baseIndex, lenderPage);
+      const { index: nextIndex } = searchInPage(updatedPage, queryKey);
 
-        const deletedPage = deleteInPage(queryKey, result?.children[baseIndex]);
+      if (nextIndex == null) return updatedPage;
 
-        deleteInTree(queryKey, deletedPage);
+      deleteInTree(updatedPage.children[nextIndex], queryKey, updatedPage);
 
-        return page;
-      } else if (
-        // Step 4: Else if both left and right siblings contain only the minimum number of elements
-        isNotAbleToBorrowFromSiblings &&
-        baseIndex != null
-      ) {
-        const newMergedPage = borrowFromParent(baseIndex, page);
-
-        const deletedPage = deleteInPage(
-          queryKey,
-          newMergedPage?.children[baseIndex],
-        );
-
-        deleteInTree(queryKey, deletedPage);
-
-        return page;
-      }
+      return page;
     }
   }
 
-  if (internalOperation) {
-    const newPage = borrowFromChildren(
-      leftSiblingIndex,
-      rightSiblingIndex,
-      page,
-    );
+  // Case 5: Safe to delete from current page (non-underflowing leaf or internal)
+  const deletedPage = deleteInPage(queryKey, page);
 
-    deleteInTree(queryKey, newPage);
-
-    return page;
-  }
-
-  const deletedPage = deleteInPage(queryKey, nextPage);
-
-  deleteInTree(queryKey, deletedPage);
+  deleteInTree(deletedPage, queryKey, parentPage);
 
   return page;
 }
 
-function borrowFromChildren(
-  leftSiblingIndex: number | null,
-  rightSiblingIndex: number | null,
-  page: $BtPage,
-) {
-  const isAbleToBorrowFromLeftSib =
-    isSiblingWillUnderflows(page, rightSiblingIndex) && leftSiblingIndex;
+function deleteInPage(queryKey: number, page: $BtPage) {
+  const { index, value } = searchInPage(page, queryKey);
 
-  const isAbleToBorrowFromRightSib =
-    isSiblingWillUnderflows(page, leftSiblingIndex) && rightSiblingIndex;
+  if (value === queryKey && index != null) {
+    const deletedResult = extractKeyInPage(index, page);
 
-  if (isAbleToBorrowFromLeftSib) {
-    return ascendBorrowOperation(
-      leftSiblingIndex,
-      getPredecessorIndex(page),
-      page,
-    );
-  }
-
-  if (isAbleToBorrowFromRightSib) {
-    return ascendBorrowOperation(rightSiblingIndex, getSucessorIndex(), page);
+    return deletedResult.page;
   }
 
   return page;
 }
 
-function borrowFromParent(pivotIndex: number, page: $BtPage) {
-  const intervenedPage = descendBorrowOperation(pivotIndex, page);
-
-  const targetIndex =
-    pivotIndex === page.recordKeys.length ? pivotIndex - 1 : pivotIndex + 1;
-
-  const clonedPage = createBtreePage(intervenedPage);
-  const pivotChildren = clonedPage.children[pivotIndex];
-  const targetChildren = clonedPage.children[targetIndex];
-
-  const mergedKeys =
-    targetIndex < pivotIndex
-      ? [...targetChildren.recordKeys, ...pivotChildren.recordKeys]
-      : [...pivotChildren.recordKeys, ...targetChildren.recordKeys];
-
-  const mergedChildren = createBtreePage({
-    recordKeys: mergedKeys,
-    minimumDegree: page.minimumDegree,
-    children: [],
-  });
-
-  return createBtreePage({
-    ...intervenedPage,
-    children: insertElementInLists({
-      baseLists: intervenedPage.children,
-      indexToInsert: Math.min(targetIndex, pivotIndex),
-      elementsToInsert: mergedChildren,
-      deleteCount: 2,
-    }),
-  });
-}
-
-function descendBorrowOperation(pivotIndex: number, page: $BtPage) {
-  const { page: lender, value } = extractKeyInPage(pivotIndex, page);
-
-  const childPageAfterBorrow = insertInPage(lender.children[pivotIndex], value);
-
-  return createBtreePage({
-    ...lender,
-    children: insertElementInLists({
-      baseLists: page.children,
-      indexToInsert: pivotIndex,
-      elementsToInsert: childPageAfterBorrow,
-    }),
-  });
-}
-
-function ascendBorrowOperation(
-  pivotIndex: number,
-  childIndex: number,
-  page: $BtPage,
-) {
-  const { page: lender, value } = extractKeyInPage(
-    childIndex,
-    page.children[pivotIndex],
-  );
-
-  const pageAfterBorrow = insertInPage(page, value);
-
-  return createBtreePage({
-    ...pageAfterBorrow,
-    children: insertElementInLists({
-      baseLists: pageAfterBorrow.children,
-      indexToInsert: pivotIndex,
-      elementsToInsert: lender,
-    }),
-  });
-}
-
-function extractKeyInPage(index: number, page: $BtPage) {
+export function extractKeyInPage(index: number, page: $BtPage) {
   const { deletedValue, list } = deleteElementInLists(page.recordKeys, index);
 
   return {
@@ -199,81 +110,5 @@ function extractKeyInPage(index: number, page: $BtPage) {
       recordKeys: list,
     }),
     value: deletedValue,
-  };
-}
-
-function deleteInPage(queryKey: number, page: $BtPage) {
-  const { index, value } = searchInPage(page, queryKey);
-
-  if (value === queryKey && index != null) {
-    const { list } = deleteElementInLists(page.recordKeys, index);
-
-    return createBtreePage({
-      ...page,
-      recordKeys: list,
-    });
-  }
-
-  return page;
-}
-
-function isLeafOperation({
-  value,
-  end,
-  queryKey,
-}: {
-  value: number | null;
-  end: boolean;
-  queryKey: number;
-}) {
-  return end === true && value === queryKey;
-}
-
-function isInternalOperation({
-  value,
-  end,
-  queryKey,
-}: {
-  value: number | null;
-  end: boolean;
-  queryKey: number;
-}) {
-  return end === false && value === queryKey;
-}
-
-function isSiblingWillUnderflows(page: $BtPage, index: number | null) {
-  if (index == null) return true;
-
-  const sibling = page.children[index];
-
-  return isPageWillUnderflows(sibling);
-}
-
-function getChildSiblingIndexs(page: $BtPage, queryKey: number) {
-  const { index: childIndex } = searchInPage(page, queryKey);
-
-  const isLeftMost = childIndex === 0;
-  const isRightMost = childIndex === page.children.length - 1;
-
-  if (isLeftMost) {
-    return {
-      leftSiblingIndex: null,
-      baseIndex: childIndex,
-      rightSiblingIndex: childIndex + 1,
-    };
-  }
-
-  if (isRightMost) {
-    return {
-      leftSiblingIndex: childIndex - 1,
-      baseIndex: childIndex,
-      rightSiblingIndex: null,
-    };
-  }
-
-  return {
-    leftSiblingIndex: (childIndex as number) - 1,
-    baseIndex: childIndex,
-    rightSiblingIndex: (childIndex as number) + 1,
   };
 }
