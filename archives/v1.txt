@@ -1,0 +1,131 @@
+import { deleteElementInLists } from '../utils/array';
+import { getParentIndex } from '../utils/page';
+import { borrowKeyFromChildren, rebalanceOperation } from './Balance';
+import { $BtPage, createBtreePage, isPageUnderflows } from './Page';
+import { searchInPage } from './SearchOperation';
+import { getChildSiblingIndexs } from './Underflows';
+
+/**
+ * Deletes a key from a B-tree while maintaining balance.
+ *
+ * Recursive deletion algorithm that supports:
+ * 1. Leaf deletions
+ * 2. Borrowing from siblings
+ * 3. Merging underflowed nodes
+ *
+ * The tree remains balanced at every level by rotating or merging when necessary.
+ *
+ * @param page - Current B-tree node (may be root or child)
+ * @param queryKey - The key to delete
+ * @param parentPage - Optional reference to parent node
+ * @returns Updated subtree rooted at `page`
+ */
+export function deleteInTree(
+  page: $BtPage,
+  queryKey: number,
+  parentPage?: $BtPage,
+): $BtPage {
+  const { index, end, value } = searchInPage(page, queryKey);
+
+  // If there is no root key, replace it
+  if (page.recordKeys.length === 0 && page.children.length === 1) {
+    return page.children[0];
+  }
+
+  const queryHit = value === queryKey && index != null;
+
+  /**
+   * Delete Operation:
+   * 1. Target query key must be found in current page
+   * 2. Current page isn't underflows; The length of page key lists is less than minimum key length
+   */
+  const isDeleteOperation = queryHit && !isPageUnderflows(page);
+
+  if (isDeleteOperation) {
+    const isLeafOperation = end;
+    const isInternalOperation = !isLeafOperation;
+
+    if (isLeafOperation) {
+      const deletedPage = deleteInPage(queryKey, page);
+
+      const { index } = searchInPage(parentPage, queryKey);
+
+      if (parentPage) {
+        parentPage.children[index] = deletedPage;
+
+        console.dir(parentPage, { depth: null });
+      } else return deleteInTree(deletedPage, queryKey, parentPage);
+    } else if (isInternalOperation) {
+      const { index } = searchInPage(parentPage, queryKey);
+
+      const deletedPage = internalDeleteOperation(queryKey, page);
+
+      if (parentPage) {
+        parentPage.children[index] = deletedPage;
+      } else return deleteInTree(deletedPage, queryKey, parentPage);
+    }
+  }
+  const isRebalanceOperation =
+    parentPage && index != null && isPageUnderflows(page);
+
+  if (isRebalanceOperation) {
+    const rebalancedPage = rebalanceOperation(queryKey, page, parentPage);
+
+    return rebalancedPage;
+  }
+
+  if (end || index == null) {
+    return page;
+  }
+
+  const updatePage = deleteInTree(page.children[index], queryKey, page);
+
+  return deleteInTree(page.children[index], queryKey, page);
+}
+
+function internalDeleteOperation(queryKey: number, page: $BtPage) {
+  const { index } = searchInPage(page, queryKey);
+
+  if (index == null) {
+    return page;
+  }
+
+  const idxs = getChildSiblingIndexs(
+    getParentIndex(index, page.recordKeys.length),
+    page,
+  );
+
+  const updatedPage = borrowKeyFromChildren(
+    idxs.rightSiblingIndex,
+    idxs.leftSiblingIndex,
+    page,
+  );
+
+  const deletedPage = deleteInPage(queryKey, updatedPage);
+
+  return deletedPage;
+}
+
+function deleteInPage(queryKey: number, page: $BtPage) {
+  const { index, value } = searchInPage(page, queryKey);
+
+  if (value === queryKey && index != null) {
+    const deletedResult = extractKeyInPage(index, page);
+
+    return createBtreePage(deletedResult.page);
+  }
+
+  return createBtreePage(page);
+}
+
+export function extractKeyInPage(index: number, page: $BtPage) {
+  const { deletedValue, list } = deleteElementInLists(page.recordKeys, index);
+
+  return {
+    page: createBtreePage({
+      ...page,
+      recordKeys: list,
+    }),
+    value: deletedValue,
+  };
+}

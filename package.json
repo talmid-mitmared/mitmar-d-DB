@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/b-tree/Insert.ts",
+    "dev": "tsx watch src/core/db-indexing/b-tree/index.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "format": "prettier --write .",
