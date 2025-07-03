@@ -1,6 +1,6 @@
 # This is part of Data structure
 
-It’s unfortunate that even in college, we’re not taught how to apply data structures. Data structures are both practical and fundamental — they’re at the core of computer science. What’s even more sad is that some professors emphasize memorization over true understanding or practical use, especially how these structures work under the hood.
+It’s unfortunate that even in college, we’re not taught how to apply data structures. Data structures are both practical and fundamental — they’re at the core of computer science.
 
 
 This time, we’ll read papers and blogs to understand how b tree works under the hood.
