@@ -1,0 +1,39 @@
+{
+  "name": "@repo/db-indexing",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.tsx"
+  },
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "dev": "tsx watch src/core/index.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@turbo/gen": "^2.5.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.3",
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.1",
+    "eslint": "^9.30.0",
+    "globals": "^16.0.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.5.3",
+    "ts-jest": "^29.3.4",
+    "tsx": "^4.19.4",
+    "typescript": "5.8.2",
+    "typescript-eslint": "^8.29.0"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
