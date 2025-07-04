@@ -1034,6 +1034,72 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mitmar-db/db-indexing@workspace:packages/db-indexing":
+  version: 0.0.0-use.local
+  resolution: "@mitmar-db/db-indexing@workspace:packages/db-indexing"
+  dependencies:
+    "@eslint/js": "npm:^9.23.0"
+    "@mitmar-db/eslint-config": "npm:*"
+    "@mitmar-db/typescript-config": "npm:*"
+    "@turbo/gen": "npm:^2.5.0"
+    "@types/jest": "npm:^29.5.14"
+    "@types/node": "npm:^22.15.3"
+    "@types/react": "npm:19.1.0"
+    "@types/react-dom": "npm:19.1.1"
+    eslint: "npm:^9.30.0"
+    globals: "npm:^16.0.0"
+    jest: "npm:^29.7.0"
+    prettier: "npm:^3.5.3"
+    react: "npm:^19.1.0"
+    react-dom: "npm:^19.1.0"
+    ts-jest: "npm:^29.3.4"
+    tsx: "npm:^4.19.4"
+    typescript: "npm:5.8.2"
+    typescript-eslint: "npm:^8.29.0"
+  languageName: unknown
+  linkType: soft
+
+"@mitmar-db/eslint-config@npm:*, @mitmar-db/eslint-config@workspace:packages/eslint-config":
+  version: 0.0.0-use.local
+  resolution: "@mitmar-db/eslint-config@workspace:packages/eslint-config"
+  dependencies:
+    "@eslint/js": "npm:^9.30.0"
+    "@next/eslint-plugin-next": "npm:^15.3.0"
+    eslint: "npm:^9.30.0"
+    eslint-config-prettier: "npm:^10.1.1"
+    eslint-plugin-only-warn: "npm:^1.1.0"
+    eslint-plugin-react: "npm:^7.37.5"
+    eslint-plugin-react-hooks: "npm:^5.2.0"
+    eslint-plugin-turbo: "npm:^2.5.0"
+    globals: "npm:^16.2.0"
+    typescript: "npm:^5.8.2"
+    typescript-eslint: "npm:^8.35.0"
+  languageName: unknown
+  linkType: soft
+
+"@mitmar-db/typescript-config@npm:*, @mitmar-db/typescript-config@workspace:packages/typescript-config":
+  version: 0.0.0-use.local
+  resolution: "@mitmar-db/typescript-config@workspace:packages/typescript-config"
+  languageName: unknown
+  linkType: soft
+
+"@mitmar-db/ui@workspace:packages/ui":
+  version: 0.0.0-use.local
+  resolution: "@mitmar-db/ui@workspace:packages/ui"
+  dependencies:
+    "@mitmar-db/eslint-config": "npm:*"
+    "@mitmar-db/typescript-config": "npm:*"
+    "@turbo/gen": "npm:^2.5.0"
+    "@types/node": "npm:^22.15.3"
+    "@types/react": "npm:19.1.0"
+    "@types/react-dom": "npm:19.1.1"
+    eslint: "npm:^9.30.0"
+    react: "npm:^19.1.0"
+    react-dom: "npm:^19.1.0"
+    typescript: "npm:5.8.2"
+  languageName: unknown
+  linkType: soft
+
 "@next/eslint-plugin-next@npm:^15.3.0":
   version: 15.3.5
   resolution: "@next/eslint-plugin-next@npm:15.3.5"
@@ -1098,72 +1164,6 @@ __metadata:
   checksum: 10c0/5bd7576bb1b38a47a7fc7b51ac9f38748e772beebc56200450c4a817d712232b8f1d3ef70532c80840243c657d491cf6a6be1e3a214cff907645819fdc34aadd
   languageName: node
   linkType: hard
-
-"@repo/db-indexing@workspace:packages/db-indexing":
-  version: 0.0.0-use.local
-  resolution: "@repo/db-indexing@workspace:packages/db-indexing"
-  dependencies:
-    "@eslint/js": "npm:^9.23.0"
-    "@repo/eslint-config": "npm:*"
-    "@repo/typescript-config": "npm:*"
-    "@turbo/gen": "npm:^2.5.0"
-    "@types/jest": "npm:^29.5.14"
-    "@types/node": "npm:^22.15.3"
-    "@types/react": "npm:19.1.0"
-    "@types/react-dom": "npm:19.1.1"
-    eslint: "npm:^9.30.0"
-    globals: "npm:^16.0.0"
-    jest: "npm:^29.7.0"
-    prettier: "npm:^3.5.3"
-    react: "npm:^19.1.0"
-    react-dom: "npm:^19.1.0"
-    ts-jest: "npm:^29.3.4"
-    tsx: "npm:^4.19.4"
-    typescript: "npm:5.8.2"
-    typescript-eslint: "npm:^8.29.0"
-  languageName: unknown
-  linkType: soft
-
-"@repo/eslint-config@npm:*, @repo/eslint-config@workspace:packages/eslint-config":
-  version: 0.0.0-use.local
-  resolution: "@repo/eslint-config@workspace:packages/eslint-config"
-  dependencies:
-    "@eslint/js": "npm:^9.30.0"
-    "@next/eslint-plugin-next": "npm:^15.3.0"
-    eslint: "npm:^9.30.0"
-    eslint-config-prettier: "npm:^10.1.1"
-    eslint-plugin-only-warn: "npm:^1.1.0"
-    eslint-plugin-react: "npm:^7.37.5"
-    eslint-plugin-react-hooks: "npm:^5.2.0"
-    eslint-plugin-turbo: "npm:^2.5.0"
-    globals: "npm:^16.2.0"
-    typescript: "npm:^5.8.2"
-    typescript-eslint: "npm:^8.35.0"
-  languageName: unknown
-  linkType: soft
-
-"@repo/typescript-config@npm:*, @repo/typescript-config@workspace:packages/typescript-config":
-  version: 0.0.0-use.local
-  resolution: "@repo/typescript-config@workspace:packages/typescript-config"
-  languageName: unknown
-  linkType: soft
-
-"@repo/ui@workspace:packages/ui":
-  version: 0.0.0-use.local
-  resolution: "@repo/ui@workspace:packages/ui"
-  dependencies:
-    "@repo/eslint-config": "npm:*"
-    "@repo/typescript-config": "npm:*"
-    "@turbo/gen": "npm:^2.5.0"
-    "@types/node": "npm:^22.15.3"
-    "@types/react": "npm:19.1.0"
-    "@types/react-dom": "npm:19.1.1"
-    eslint: "npm:^9.30.0"
-    react: "npm:^19.1.0"
-    react-dom: "npm:^19.1.0"
-    typescript: "npm:5.8.2"
-  languageName: unknown
-  linkType: soft
 
 "@sinclair/typebox@npm:^0.27.8":
   version: 0.27.8

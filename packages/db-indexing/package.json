@@ -1,9 +1,9 @@
 {
-  "name": "@repo/db-indexing",
+  "name": "@mitmar-db/db-indexing",
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./*": "./src/*.tsx"
+    ".": "./src/index.ts"
   },
   "type": "module",
   "scripts": {
@@ -16,8 +16,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
-    "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
+    "@mitmar-db/eslint-config": "*",
+    "@mitmar-db/typescript-config": "*",
     "@turbo/gen": "^2.5.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
@@ -31,9 +31,5 @@
     "tsx": "^4.19.4",
     "typescript": "5.8.2",
     "typescript-eslint": "^8.29.0"
-  },
-  "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
   }
 }
