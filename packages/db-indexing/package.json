@@ -9,7 +9,7 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "dev": "tsx watch src/core/index.ts",
+    "dev": "tsx watch src/index.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "format": "prettier --write ."
@@ -21,8 +21,6 @@
     "@turbo/gen": "^2.5.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
-    "@types/react": "19.1.0",
-    "@types/react-dom": "19.1.1",
     "eslint": "^9.30.0",
     "globals": "^16.0.0",
     "jest": "^29.7.0",

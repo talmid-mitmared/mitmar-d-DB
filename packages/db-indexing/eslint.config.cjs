@@ -1,16 +1,3 @@
-const js = require('@eslint/js');
-const globals = require('globals');
-const ts = require('typescript-eslint');
+import config from '@mitmar-db/eslint-config/base';
 
-module.exports = [
-  {
-    languageOptions: {
-      globals: globals.browser,
-    },
-  },
-  js.configs.recommended,
-  ...ts.configs.recommended,
-  {
-    ignores: ['dist/'],
-  },
-];
+export default config;
