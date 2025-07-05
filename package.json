@@ -18,5 +18,6 @@
   "workspaces": [
     "services/*",
     "packages/*"
-  ]
+  ],
+  "packageManager": "npm@9.2.0"
 }
