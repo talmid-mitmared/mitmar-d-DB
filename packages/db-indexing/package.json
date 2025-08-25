@@ -9,7 +9,7 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "dev": "tsx watch src/index.ts",
+    "start": "tsx watch src/index.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "format": "prettier --write ."
