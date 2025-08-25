@@ -628,17 +628,19 @@ function SidebarMenuSubItem({ className, ...props }: React.ComponentProps<'li'>)
   );
 }
 
+interface SidebarMenuSubButtonProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  asChild?: boolean;
+  size?: 'sm' | 'md';
+  isActive?: boolean;
+}
+
 function SidebarMenuSubButton({
   asChild = false,
   size = 'md',
   isActive = false,
   className,
   ...props
-}: React.ComponentProps<'a'> & {
-  asChild?: boolean;
-  size?: 'sm' | 'md';
-  isActive?: boolean;
-}) {
+}: SidebarMenuSubButtonProps) {
   const Comp = asChild ? Slot : 'a';
 
   return (
@@ -685,4 +687,5 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
+  SidebarMenuSubButtonProps,
 };

@@ -3,17 +3,9 @@
 import * as React from 'react';
 import { BookOpen, Bot, Database, Settings2, SquareTerminal, TableProperties } from 'lucide-react';
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-} from '../../shared/ui/Sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from '../../shared/ui/Sidebar';
 import { NavMain } from './NavMain';
-import { NavProjects } from './NavProjects';
 import { NavUser } from './NavUser';
-import { TeamSwitcher } from './TeamSwitcher';
 import { Header } from './Sidebar/Header';
 import { NavTables } from './Sidebar/NavTables';
 import { NavFileTypes } from './Sidebar/NavFileTypes';
