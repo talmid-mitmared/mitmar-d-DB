@@ -35,7 +35,11 @@ export default function SwitcherPopup({
     >
       <DropdownMenuLabel className="text-muted-foreground text-xs">Teams</DropdownMenuLabel>
       {databaseLists.map((database, index) => (
-        <SwitcherOptionItems database={database} key={index} setCurrentDB={setCurrentDB} />
+        <SwitcherOptionItems
+          database={database}
+          key={index}
+          onClick={() => setCurrentDB(database)}
+        />
       ))}
       <DropdownMenuSeparator />
       <DropdownMenuItem className="gap-2 p-2">
@@ -48,15 +52,9 @@ export default function SwitcherPopup({
   );
 }
 
-function SwitcherOptionItems({
-  database,
-  setCurrentDB,
-}: {
-  database: Database;
-  setCurrentDB: Dispatch<SetStateAction<Database>>;
-}) {
+function SwitcherOptionItems({ database, onClick }: { database: Database; onClick: () => void }) {
   return (
-    <DropdownMenuItem onClick={() => setCurrentDB(database)} className="gap-2 p-2">
+    <DropdownMenuItem onClick={() => onClick()} className="gap-2 p-2">
       <div className="flex size-6 items-center justify-center rounded-md border">
         <RiDatabase2Line className="size-3.5 shrink-0" />
       </div>

@@ -3,7 +3,7 @@ import { DropdownMenu, DropdownMenuTrigger } from '../../../../shared/ui/Dropdow
 import { SwitcherTrigger } from './SwitcherTrigger';
 import { useState, lazy } from 'react';
 
-const LazySwitcherOptionsPopup = lazy(() => import('./SwitcherPopup'));
+const SwitcherPopup = lazy(() => import('./SwitcherPopup'));
 
 export interface Database {
   name: string;
@@ -37,7 +37,8 @@ export function Switcher() {
       <DropdownMenuTrigger>
         <SwitcherTrigger {...currentDB} />
       </DropdownMenuTrigger>
-      <LazySwitcherOptionsPopup databaseLists={DATABASES} setCurrentDB={setCurrentDB} />
+
+      <SwitcherPopup databaseLists={DATABASES} setCurrentDB={setCurrentDB} />
     </DropdownMenu>
   );
 }

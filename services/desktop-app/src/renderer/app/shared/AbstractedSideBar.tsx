@@ -1,9 +1,5 @@
 import { ChevronRight } from 'lucide-react';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '../../../../shared/ui/Collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/Collapsible';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,7 +7,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-} from '../../../../shared/ui/Sidebar';
+} from './ui/Sidebar';
 
 interface IProps {
   title: string;

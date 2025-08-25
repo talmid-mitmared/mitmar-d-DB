@@ -1,6 +1,6 @@
 import { RiFileList2Line } from 'react-icons/ri';
 import { NavFileItems } from './Items';
-import { AbstractedSideBar } from './AbstractedSideBar';
+import { AbstractedSideBar } from '../../../../shared/AbstractedSideBar';
 
 export function NavFileTypes() {
   const TITLE = 'File Types' as const;
