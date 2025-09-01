@@ -14,7 +14,6 @@ export const MainView = () => {
 
   return (
     <main className="flex-1 flex flex-col overflow-hidden">
-      {/* Tabs */}
       <div className="bg-white border-b border-gray-200 flex items-center px-4 h-10">
         <div className="flex items-center h-full">
           {tabs.map((tab) => (
@@ -34,7 +33,6 @@ export const MainView = () => {
         </div>
       </div>
 
-      {/* Active View */}
       <div className="flex-1 flex flex-col overflow-hidden bg-white">
         {activeTab === 'table' && <DataTableDemo />}
         {activeTab === 'sql' && <SQLEditor />}{' '}

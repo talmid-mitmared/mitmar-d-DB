@@ -1,7 +1,6 @@
 'use client';
 
 import { MoreHorizontal } from 'lucide-react';
-
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -9,12 +8,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '../../../../shared/ui/Sidebar';
-import { MenuItem } from './MenuItem';
-
-interface DatabaseTable {
-  name: string;
-  id: string;
-}
+import { TableItem } from './TableItem';
+import { type DatabaseTable } from '../types';
 
 const DB_TABLES: DatabaseTable[] = [
   {
@@ -31,13 +26,13 @@ const DB_TABLES: DatabaseTable[] = [
   },
 ];
 
-export function NavTables() {
+export function TablesArea() {
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="font-semibold">TABLES</SidebarGroupLabel>
       <SidebarMenu>
         {DB_TABLES.map((item) => (
-          <MenuItem name={item.name} />
+          <TableItem name={item.name} />
         ))}
         <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">

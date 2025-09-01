@@ -6,7 +6,7 @@ import {
 } from '../../../../../shared/ui/DropdownMenu';
 import { useSidebar } from '../../../../../shared/ui/Sidebar';
 
-export default function MenuItemPopup() {
+export default function PopupMenu() {
   const { isMobile } = useSidebar();
 
   return (

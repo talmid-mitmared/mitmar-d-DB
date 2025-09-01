@@ -7,9 +7,9 @@ import {
 } from '../../../../../shared/ui/Sidebar';
 import { lazy } from 'react';
 
-const LazyMenuItemPopup = lazy(() => import('./MenuItemPopup'));
+const LazyPopupMenu = lazy(() => import('./PopupMenu'));
 
-export function MenuItem({ name }: { name: string }) {
+export function TableItem({ name }: { name: string }) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild>
@@ -25,7 +25,7 @@ export function MenuItem({ name }: { name: string }) {
             <span className="sr-only">More</span>
           </SidebarMenuAction>
         </DropdownMenuTrigger>
-        <LazyMenuItemPopup />
+        <LazyPopupMenu />
       </DropdownMenu>
     </SidebarMenuItem>
   );

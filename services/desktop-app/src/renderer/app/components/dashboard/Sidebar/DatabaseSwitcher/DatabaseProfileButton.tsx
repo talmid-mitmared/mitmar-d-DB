@@ -1,33 +1,35 @@
 import { RiDatabase2Fill, RiDatabase2Line } from 'react-icons/ri';
-import { Database } from '.';
 import { SidebarMenuButton } from '../../../../shared/ui/Sidebar';
 import { ChevronsUpDown } from 'lucide-react';
+import { Database } from '../types';
 
-export function SwitcherTrigger({ name, dataCount, type }: Database) {
+export function DatabaseProfileButton(props: Database) {
   return (
     <SidebarMenuButton
       size="lg"
       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
     >
-      {type === 'MAIN' ? <SwitcherTrigger.MainLogo /> : <SwitcherTrigger.SubLogo />}
+      {props.type === 'MAIN' ? <DatabaseProfileButton.Main /> : <DatabaseProfileButton.Sub />}
+
       <div className="grid flex-1 text-left text-sm leading-tight">
-        <span className="truncate font-medium">{name}</span>
-        <span className="truncate text-xs">{generateDataDesc(dataCount)}</span>
+        <span className="truncate font-medium">{props.name}</span>
+        <span className="truncate text-xs">{generateDataDesc(props.dataCount)}</span>
       </div>
+
       <ChevronsUpDown className="ml-auto" />
     </SidebarMenuButton>
   );
 }
 
-SwitcherTrigger.SubLogo = () => {
+DatabaseProfileButton.Sub = () => {
   return (
     <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg">
-      <RiDatabase2Line className="size-5 " />
+      <RiDatabase2Line className="size-5" />
     </div>
   );
 };
 
-SwitcherTrigger.MainLogo = () => {
+DatabaseProfileButton.Main = () => {
   return (
     <div
       className="glass3d relative size-10 aspect-square rounded-lg flex items-center justify-center cursor-pointer transition-all hover:shadow-xl border border-white/30"

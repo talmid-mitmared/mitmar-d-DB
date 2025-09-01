@@ -11,19 +11,14 @@ import {
 import { useSidebar } from '../../../../shared/ui/Sidebar';
 import { Dispatch, SetStateAction } from 'react';
 import { RiDatabase2Line } from 'react-icons/ri';
+import { Database } from '../types';
 
-interface Database {
-  name: string;
-  dataCount: number;
-}
-
-export default function SwitcherPopup({
-  databaseLists,
-  setCurrentDB,
-}: {
+interface IProps {
   databaseLists: Database[];
   setCurrentDB: Dispatch<SetStateAction<Database>>;
-}) {
+}
+
+export default function DatabaseProfileItems({ databaseLists, setCurrentDB }: IProps) {
   const { isMobile } = useSidebar();
 
   return (
@@ -35,7 +30,7 @@ export default function SwitcherPopup({
     >
       <DropdownMenuLabel className="text-muted-foreground text-xs">Teams</DropdownMenuLabel>
       {databaseLists.map((database, index) => (
-        <SwitcherOptionItems
+        <DatabaseProfileItem
           database={database}
           key={index}
           onClick={() => setCurrentDB(database)}
@@ -52,7 +47,7 @@ export default function SwitcherPopup({
   );
 }
 
-function SwitcherOptionItems({ database, onClick }: { database: Database; onClick: () => void }) {
+function DatabaseProfileItem({ database, onClick }: { database: Database; onClick: () => void }) {
   return (
     <DropdownMenuItem onClick={() => onClick()} className="gap-2 p-2">
       <div className="flex size-6 items-center justify-center rounded-md border">

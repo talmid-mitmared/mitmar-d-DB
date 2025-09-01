@@ -6,10 +6,10 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '../../../shared/ui/Sidebar';
-import { Header } from './Header';
-import { NavTables } from './NavTables';
 import { NavMain } from '../NavMain';
 import { NavUser } from '../NavUser';
+import { TablesArea } from './TablesArea';
+import { DatabaseSwitcher } from './DatabaseSwitcher';
 
 const data = {
   user: {
@@ -144,10 +144,10 @@ export function Sidebar() {
   return (
     <SidebarUI collapsible="icon">
       <SidebarHeader>
-        <Header />
+        <DatabaseSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavTables />
+        <TablesArea />
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>

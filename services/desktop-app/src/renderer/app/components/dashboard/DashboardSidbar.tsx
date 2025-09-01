@@ -6,9 +6,9 @@ import { BookOpen, Bot, Database, Settings2, SquareTerminal, TableProperties } f
 import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from '../../shared/ui/Sidebar';
 import { NavMain } from './NavMain';
 import { NavUser } from './NavUser';
-import { Header } from './Sidebar/Header';
-import { NavTables } from './Sidebar/NavTables';
 import { NavFileTypes } from './Sidebar/NavFileTypes';
+import { DatabaseSwitcher } from './Sidebar/DatabaseSwitcher';
+import { TablesArea } from './Sidebar/TablesArea';
 
 const data = {
   user: {
@@ -142,9 +142,9 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <Header />
+      <DatabaseSwitcher />
       <SidebarContent>
-        <NavTables />
+        <TablesArea />
         <NavMain items={data.navMain} />
         <NavFileTypes />
       </SidebarContent>
