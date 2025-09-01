@@ -109,6 +109,7 @@ export function insertElementInLists<T>({
   const elements = Array.isArray(elementsToInsert) ? elementsToInsert : [elementsToInsert];
 
   baseLists.splice(indexToInsert, deleteCount, ...elements);
+
   return baseLists;
 }
 

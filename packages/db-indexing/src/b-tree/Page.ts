@@ -8,60 +8,30 @@ import {
 
 export type RecordKey = number;
 
-/**
- * Represents a single page (or node) in a B-tree.
- *
- * - `recordKeys`: ordered list of keys stored in the node.
- * - `children`: subpages (empty if leaf).
- * - `minimumDegree`: branching factor `t` (defines min/max key count).
- */
 export type $BtPage = {
   recordKeys: RecordKey[];
   children: $BtPage[];
   minimumDegree: number;
 };
 
-/**
- * Returns whether a page is a leaf (i.e., has no children).
- */
 export function isPageLeaf(page: $BtPage): boolean {
   return page.children.length === 0;
 }
 
-/**
- * Determines if the page has exceeded its allowed key capacity.
- *
- * Overflows trigger split operations during insertions.
- */
 export function isPageOverflows(page: $BtPage): boolean {
   return page.recordKeys.length >= MaxNumberOfKeysFormula(page.minimumDegree);
 }
 
-/**
- * Determines if the page has dropped below its allowed key minimum.
- *
- * Underflows require a merge or rotation with sibling pages during deletions.
- */
 export function isPageUnderflows(page: $BtPage): boolean {
   return page.recordKeys.length < MinNumberOfKeysFormula(page.minimumDegree);
 }
 
-/**
- * Determines if the page will be dropped below its allowed key minimum.
- *
- * Underflows require a merge or rotation with sibling pages during deletions.
- */
 export function isPageWillUnderflows(page?: $BtPage): boolean {
   if (page == null) return true;
 
   return page.recordKeys.length <= MinNumberOfKeysFormula(page.minimumDegree);
 }
 
-/**
- * Calculates the index of the median key for splitting the page.
- *
- * Used during page splits to promote the middle key to the parent.
- */
 export function getIndexOfPrimaryKey(page: $BtPage): number {
   return PrimaryKeyIndexFormula(page.minimumDegree);
 }
