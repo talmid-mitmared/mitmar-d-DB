@@ -10,6 +10,7 @@ import {
 } from '../../../../shared/ui/Sidebar';
 import { TableItem } from './TableItem';
 import { type DatabaseTable } from '../types';
+import { Collapsible } from '@radix-ui/react-collapsible';
 
 const DB_TABLES: DatabaseTable[] = [
   {
@@ -32,7 +33,9 @@ export function TablesArea() {
       <SidebarGroupLabel className="font-semibold">TABLES</SidebarGroupLabel>
       <SidebarMenu>
         {DB_TABLES.map((item) => (
-          <TableItem name={item.name} />
+          <Collapsible key={item.name} asChild defaultOpen={true} className="group/collapsible">
+            <TableItem name={item.name} />
+          </Collapsible>
         ))}
         <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">

@@ -2,7 +2,7 @@
 
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '../../shared/ui/Avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../../../shared/ui/Avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,15 +11,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../shared/ui/DropdownMenu';
+} from '../../../shared/ui/DropdownMenu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '../../shared/ui/Sidebar';
+} from '../../../shared/ui/Sidebar';
 
-export function NavUser({
+export function UserArea({
   user,
 }: {
   user: {

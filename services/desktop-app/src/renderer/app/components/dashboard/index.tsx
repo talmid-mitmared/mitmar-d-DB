@@ -1,4 +1,3 @@
-import { AppSidebar } from './DashboardSidbar';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,11 +10,12 @@ import { Separator } from '../../shared/ui/Separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../../shared/ui/Sidebar';
 import { MainView } from './MainView';
 import { FooterStatusBar } from './FooterStatusBar';
+import { Sidebar } from './Sidebar';
 
 export function DashboardPage() {
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <Sidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">

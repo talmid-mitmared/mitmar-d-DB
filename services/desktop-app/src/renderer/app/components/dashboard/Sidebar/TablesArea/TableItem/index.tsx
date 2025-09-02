@@ -12,11 +12,9 @@ const LazyPopupMenu = lazy(() => import('./PopupMenu'));
 export function TableItem({ name }: { name: string }) {
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild>
-        <a href={'/'}>
-          <TableProperties />
-          <span className="text-sm">{name}</span>
-        </a>
+      <SidebarMenuButton>
+        <TableProperties />
+        <span className="text-sm">{name}</span>
       </SidebarMenuButton>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

@@ -23,7 +23,7 @@ export default function DatabaseProfileItems({ databaseLists, setCurrentDB }: IP
 
   return (
     <DropdownMenuContent
-      className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+      className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg "
       align="start"
       side={isMobile ? 'bottom' : 'right'}
       sideOffset={4}
@@ -53,7 +53,8 @@ function DatabaseProfileItem({ database, onClick }: { database: Database; onClic
       <div className="flex size-6 items-center justify-center rounded-md border">
         <RiDatabase2Line className="size-3.5 shrink-0" />
       </div>
-      {database.name}
+
+      <span>{database.name}</span>
     </DropdownMenuItem>
   );
 }

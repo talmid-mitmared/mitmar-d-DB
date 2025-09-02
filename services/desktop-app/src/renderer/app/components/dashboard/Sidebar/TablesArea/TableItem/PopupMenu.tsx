@@ -1,4 +1,4 @@
-import { Folder, Forward, Trash2 } from 'lucide-react';
+import { Folder, Pencil, Trash2 } from 'lucide-react';
 import {
   DropdownMenuContent,
   DropdownMenuItem,
@@ -16,12 +16,12 @@ export default function PopupMenu() {
       align={isMobile ? 'end' : 'start'}
     >
       <DropdownMenuItem>
-        <Folder className="text-muted-foreground" />
-        <span>View Project</span>
+        <Pencil className="text-muted-foreground" />
+        <span>Rename Project</span>
       </DropdownMenuItem>
       <DropdownMenuItem>
-        <Forward className="text-muted-foreground" />
-        <span>Share Project</span>
+        <Folder className="text-muted-foreground" />
+        <span>View Project</span>
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem>
