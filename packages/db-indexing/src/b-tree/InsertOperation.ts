@@ -17,10 +17,6 @@ import { searchInPage } from './SearchOperation';
  * 3. Overflow → split and propagate
  * 4. Internal node → descend to appropriate child
  *
- * @param page - The current node (may be root or child)
- * @param queryKey - Key to insert
- * @param parentPage - Optional parent node for recursive propagation
- * @returns New root page (if structure changes), or current page
  */
 export function insertInTree(page: $BtPage, queryKey: number, parentPage?: $BtPage): $BtPage {
   const result = searchInPage(page, queryKey);
@@ -65,12 +61,6 @@ export function insertInTree(page: $BtPage, queryKey: number, parentPage?: $BtPa
  * - The promoted key is correctly inserted into the parent.
  * - The overflowing page is replaced by two balanced siblings.
  *
- * If no parent exists (i.e. root split), a new root is created.
- *
- * @param page - Overflowing page to split
- * @param queryKey - The key being inserted (used to help route post-split)
- * @param parentPage - Parent node to receive promoted key (optional)
- * @returns New parent page (may be a newly created root)
  */
 export function propagation(page: $BtPage, queryKey: number, parentPage?: $BtPage): $BtPage {
   const { primaryKey, children: newChildren } = splitPageIntoHalf(page);
@@ -83,7 +73,6 @@ export function propagation(page: $BtPage, queryKey: number, parentPage?: $BtPag
       children: newChildren,
     });
   }
-
   // Case: Insert promoted key into existing parent
   const newParentPage = insertInPage(parentPage, primaryKey);
   const { index } = searchInPage(newParentPage, primaryKey);
@@ -102,18 +91,7 @@ export function propagation(page: $BtPage, queryKey: number, parentPage?: $BtPag
 }
 
 /**
- * Inserts a key into a page and maintains sorted order.
- *
- * This function assumes the following:
- * - Page is mutable
- * - Page is a leaf or will accept a key
- * - Invariant checks (e.g. max keys) are handled by caller
- *
  * @todo This is a "raw insert" — add structural validation or move to safer builder pattern.
- *
- * @param page - Target page to mutate
- * @param queryKey - Key to insert
- * @returns Updated page
  */
 export function insertInPage(page: $BtPage, queryKey: number): $BtPage {
   page.recordKeys.push(queryKey);
@@ -128,12 +106,6 @@ export function insertInPage(page: $BtPage, queryKey: number): $BtPage {
  * - The new left and right sibling pages
  *
  * Preserves ordering and structure necessary for B-tree rebalancing.
- *
- * @param page - Page to split (must be overflown)
- * @returns Object with:
- *  - `primaryKey`: key to promote
- *  - `children`: [leftPage, rightPage]
- *  - `primaryIndex`: index of promoted key (for reference)
  */
 export function splitPageIntoHalf(page: $BtPage) {
   const primaryIndex = getIndexOfPrimaryKey(page);

@@ -13,10 +13,6 @@ import { searchInPage } from './SearchOperation';
  *
  * The tree remains balanced at every level by rotating or merging when necessary.
  *
- * @param page - Current B-tree node (may be root or child)
- * @param queryKey - The key to delete
- * @param parentPage - Optional reference to parent node
- * @returns Updated subtree rooted at `page`
  */
 export function deleteInTree(page: $BtPage, queryKey: number, parentPage?: $BtPage): $BtPage {
   const { index, end, value } = searchInPage(page, queryKey);

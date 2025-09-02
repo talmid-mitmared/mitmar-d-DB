@@ -1,9 +1,9 @@
-import { Header } from './components/Header';
+import { DashboardPage } from './components/dashboard';
 
 const App = () => {
   return (
     <div className="h-screen flex flex-col overflow-hidden w-screen">
-      <Header />
+      <DashboardPage />
     </div>
   );
 };
