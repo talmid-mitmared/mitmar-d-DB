@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 export { insertInTree, insertInPage } from './InsertOperation';
 export { searchInTree, searchInPage } from './SearchOperation';
 export * from './Page';
@@ -145,4 +146,22 @@ vals.forEach((val) => {
   bla = insertInTree(bla, val);
 });
 
+=======
+import { insertInTree } from './InsertOperation';
+import { createBtreePage } from './Page';
+
+const dummy = createBtreePage({
+  recordKeys: [],
+  children: [],
+  minimumDegree: 2,
+});
+
+const vals = [50, 40, 30, 20]; //10, 60, 70, 80, 90, 100
+
+let bla = dummy;
+vals.forEach((val) => {
+  bla = insertInTree(bla, val);
+});
+
+>>>>>>> Stashed changes
 console.log(bla);
