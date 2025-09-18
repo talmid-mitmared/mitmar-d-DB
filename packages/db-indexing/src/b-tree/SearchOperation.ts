@@ -14,6 +14,7 @@ export function searchInTree(page: $BtPage, queryKey: RecordKey) {
 
     if (value == null) {
       if (end || index == null) break;
+
       parentStack.push(current);
 
       current = current.children[index];
@@ -27,7 +28,7 @@ export function searchInTree(page: $BtPage, queryKey: RecordKey) {
   return {
     currentPage: found ? current : null,
     parentPage: parentStack.pop() ?? null,
-    found,
+    isQueryKeyExists: found,
   };
 }
 
@@ -44,7 +45,7 @@ export function searchInPage(page: $BtPage, queryKey: RecordKey) {
   };
 }
 
-export function searchInIterator(page: $BtPage, queryKey: RecordKey) {
+function searchInIterator(page: $BtPage, queryKey: RecordKey) {
   return function (node: $IteratorNode) {
     const targetIndex = findTargetIndexInLists(page.recordKeys, queryKey);
 
