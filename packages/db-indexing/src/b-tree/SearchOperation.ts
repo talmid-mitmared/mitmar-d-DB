@@ -16,8 +16,9 @@ export function searchInTree(page: $BtPage, queryKey: RecordKey) {
       if (end || index == null) break;
 
       parentStack.push(current);
-
       current = current.children[index];
+
+      continue;
     }
 
     if (value != null) {

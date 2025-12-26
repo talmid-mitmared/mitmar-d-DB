@@ -59,7 +59,7 @@ describe('BTree Insertion and Search', () => {
       expect(searchInTree(insertedTree, val).found).toBe(true);
     });
 
-    expect(searchInTree(insertedTree, 201)).toBe(null);
+    expect(searchInTree(insertedTree, 201).currentPage).toBe(null);
   });
 
   it('should promote primaryKey key when a child page is full', () => {
@@ -67,6 +67,8 @@ describe('BTree Insertion and Search', () => {
     let insertedTree = root;
     // -101, -100, 0, 42
     values.forEach((val) => (insertedTree = insertInTree(root, val)));
+
+    console.log(insertedTree);
 
     expect(insertedTree.recordKeys[0]).toBe(-100);
   });

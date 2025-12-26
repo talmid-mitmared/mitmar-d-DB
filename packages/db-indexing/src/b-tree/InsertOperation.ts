@@ -15,14 +15,13 @@ export function insertInPage(page: $BtPage, queryKey: number): $BtPage {
   page.recordKeys.push(queryKey);
   page.recordKeys.sort((a, b) => a - b);
 
-  return createBtreePage(page);
+  return createBtreePage({
+    ...page,
+  });
 }
 
-/**
- * Recursive B-tree insert operation with self-balancing guarantees.
- */
-export function insertInTree(page: $BtPage, queryKey: number, parentPage?: $BtPage): $BtPage {
-  let parentStack: { page: $BtPage; index: number }[] = [];
+export function insertInTree(page: $BtPage, queryKey: number): $BtPage {
+  let parentStack: { page: $BtPage; nextTraverseIndex: number }[] = [];
   let current = page;
   let inserted = false;
   let unbalanced = false;
@@ -30,46 +29,56 @@ export function insertInTree(page: $BtPage, queryKey: number, parentPage?: $BtPa
   do {
     const result = searchInPage(current, queryKey);
 
-    console.dir(result, { depth: null });
-
-    const isQueryKeyNotExists = result.value == null;
+    const isNoDuplicates = result.value == null;
 
     // Case 2: Leaf node with available space → perform direct insert
-    if (!inserted && isAbleToInsert(current) && isQueryKeyNotExists) {
-      const revisedPage = insertInPage(current, queryKey);
+    if (isAbleToInsert(current) && isNoDuplicates) {
+      const pageAfterInsertion = insertInPage(current, queryKey);
 
       const parent = parentStack.pop();
 
+      // Since the insertion creates new object due to keep immutability, we have to re-reference it
       if (parent != null) {
-        parent.page.children[parent.index] = revisedPage;
+        parent.page.children[parent.nextTraverseIndex] = pageAfterInsertion;
         parentStack.push(parent);
       }
 
-      current = revisedPage;
+      if (isPageOverflows(pageAfterInsertion)) {
+        if (parent == null) {
+          const newParentPage = createBtreePage({
+            ...pageAfterInsertion,
+            recordKeys: [],
+            children: [pageAfterInsertion],
+          });
+
+          parentStack.push({ page: newParentPage, nextTraverseIndex: 0 });
+        }
+
+        unbalanced = true;
+      }
+
+      current = pageAfterInsertion;
       inserted = true;
-
-      if (isPageOverflows(current)) unbalanced = true;
-
-      continue;
     }
 
     // Case 3: Overflow detected → split the page and promote median to parent
     if (unbalanced) {
       const parent = parentStack.pop();
 
-      const revisedParentPage = propagation(page, parent?.page);
+      const pageAfterPromotion = promotePage(page, parent?.page);
 
       const grandParent = parentStack.pop();
 
+      // This is re-referencing
       if (grandParent != null) {
-        grandParent.page.children[grandParent.index] = revisedParentPage;
+        grandParent.page.children[grandParent.nextTraverseIndex] = pageAfterPromotion;
         parentStack.push(grandParent);
       }
 
-      const { index: currentIndex } = searchInPage(revisedParentPage, queryKey);
+      const { index: currentIndex } = searchInPage(pageAfterPromotion, queryKey);
 
-      parentStack.push({ page: revisedParentPage, index: currentIndex as number });
-      current = revisedParentPage.children[currentIndex as number];
+      parentStack.push({ page: pageAfterPromotion, nextTraverseIndex: currentIndex! });
+      current = pageAfterPromotion.children[currentIndex!];
 
       if (!isPageOverflows(current)) unbalanced = false;
 
@@ -80,9 +89,9 @@ export function insertInTree(page: $BtPage, queryKey: number, parentPage?: $BtPa
       break;
     }
 
-    parentStack.push({ page: current, index: result.index });
+    parentStack.push({ page: current, nextTraverseIndex: result.index });
     current = current.children[result.index];
-  } while (!inserted && !unbalanced);
+  } while (!(inserted && !unbalanced));
 
   return page;
 }
@@ -90,27 +99,34 @@ export function insertInTree(page: $BtPage, queryKey: number, parentPage?: $BtPa
 /**
  * Splits a full page and promotes its median key to the parent.
  */
-export function propagation(currentPage: $BtPage, parentPage?: $BtPage): $BtPage {
-  const { primaryKey, children: newChildren } = splitPageIntoHalf(currentPage);
+export function promotePage(currentPage: $BtPage, parentPage: $BtPage): $BtPage {
+  const { primaryKey: promotedKey, children: childrenAfterPromotion } =
+    splitPageIntoHalf(currentPage);
 
   // Case: If no parent; if current page is a root, create parent page
-  if (parentPage == null) {
+  if (parentPage.recordKeys.length === 0) {
     return createBtreePage({
       ...currentPage,
-      recordKeys: [primaryKey],
-      children: newChildren,
+      recordKeys: [promotedKey],
+      children: childrenAfterPromotion,
     });
   }
 
-  const newParentPage = insertInPage(parentPage, primaryKey);
+  // Case: If there is a  parent; insert new promoted key in parent page
+  const newParentPage = insertInPage(parentPage, promotedKey);
 
-  const { index } = searchInPage(newParentPage, primaryKey);
+  // We have to add new children that cause by primary key promotion.
+  // But the question is how will we choose the insert the new children?
+  // |
+  // |
+  // -> use search logic again to find the index to insert
+  const { index } = searchInPage(newParentPage, promotedKey);
 
   // Case: Not only primary key being promoted to parent, the children also has to promoted
   const updatedChildren = insertElementInLists({
     baseLists: newParentPage.children,
-    indexToInsert: index as number,
-    elementsToInsert: newChildren,
+    indexToInsert: index!,
+    elementsToInsert: childrenAfterPromotion,
   });
 
   return createBtreePage({

@@ -19,7 +19,7 @@ export function isPageLeaf(page: $BtPage): boolean {
 }
 
 export function isPageOverflows(page: $BtPage): boolean {
-  return page.recordKeys.length >= MaxNumberOfKeysFormula(page.minimumDegree);
+  return page.recordKeys.length > MaxNumberOfKeysFormula(page.minimumDegree);
 }
 
 export function isPageUnderflows(page: $BtPage): boolean {
