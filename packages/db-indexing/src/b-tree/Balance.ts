@@ -16,6 +16,37 @@ import {
   isSiblingWillUnderflows,
 } from './Underflows';
 
+export function borrowSiblings(queryKey: number, parentPage: $BtPage): $BtPage {
+  const { index: currentIndex } = searchInPage(parentPage, queryKey);
+
+  const { rightSiblingIndex, leftSiblingIndex } = getChildSiblingIndexs(currentIndex, parentPage);
+
+  // Defensive: Can't rebalance if we don't know which child underflowed
+  if (currentIndex == null) return parentPage;
+
+  /**
+   * Step 1: Borrow a key from a sibling and move it into the parent
+   */
+  const parentPageWithDebt = borrowKeyFromChildren(rightSiblingIndex, leftSiblingIndex, parentPage);
+
+  /**
+   * Step 2: Push a key from the (now updated) parent into the underflowed child
+   */
+  const parentPageWithNoDebt = borrowKeyFromParent(currentIndex, parentPageWithDebt);
+
+  return createBtreePage(parentPageWithNoDebt);
+}
+
+export function borrowKeyFromSiblings(queryKey: number, page: $BtPage) {
+  const isAbleToBorrow = isBothSiblingsWillUnderflows(queryKey, page) === false;
+
+  if (!isAbleToBorrow) return null;
+
+  const updatedPage = balanceFromBorrowSiblings(queryKey, page);
+
+  return updatedPage;
+}
+
 export function rebalanceLeafOperation(queryKey: number, page: $BtPage) {
   const ableToBorrowFromChildren = !isBothSiblingsWillUnderflows(queryKey, page);
 

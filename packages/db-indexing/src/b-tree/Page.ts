@@ -19,7 +19,7 @@ export function isPageLeaf(page: $BtPage): boolean {
 }
 
 export function isPageOverflows(page: $BtPage): boolean {
-  return page.recordKeys.length >= MaxNumberOfKeysFormula(page.minimumDegree);
+  return page.recordKeys.length > MaxNumberOfKeysFormula(page.minimumDegree);
 }
 
 export function isPageUnderflows(page: $BtPage): boolean {
@@ -62,13 +62,19 @@ export function isAbleToInsert(page: $BtPage): boolean {
 }
 
 function createBtreePageImplObject(returnBPage?: $BtPage): $BtPage {
-  const page: $BtPage = {
-    recordKeys: returnBPage?.recordKeys.slice() ?? [],
-    children: returnBPage?.children.map((child) => ({ ...child })) ?? [],
-    minimumDegree: returnBPage?.minimumDegree ?? 0,
-  };
+  if (!returnBPage) {
+    return {
+      recordKeys: [],
+      children: [],
+      minimumDegree: 0,
+    };
+  }
 
-  return page;
+  return {
+    recordKeys: [...returnBPage.recordKeys],
+    children: returnBPage.children.map((child) => createBtreePageImplObject(child)),
+    minimumDegree: returnBPage.minimumDegree,
+  };
 }
 
 // Toggle between object-based and class-based implementation.

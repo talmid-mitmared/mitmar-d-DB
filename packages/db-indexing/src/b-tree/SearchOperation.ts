@@ -4,22 +4,33 @@ import { $BtPage, RecordKey } from './Page';
 import { findTargetIndexInLists } from '../utils/array';
 import { getNextPageIndex } from '../utils/page';
 
-export function searchInTree(page: $BtPage, queryKey: RecordKey): number | null {
-  const { index, value, end } = searchInPage(page, queryKey);
+export function searchInTree(page: $BtPage, queryKey: RecordKey) {
+  let parentStack: $BtPage[] = [];
+  let current = page;
+  let found = false;
 
-  // Case 1: Match found at current level — return early
-  if (value === queryKey) {
-    return value;
-  }
+  do {
+    const { index, value, end } = searchInPage(current, queryKey);
 
-  // Case 2: Reached leaf node (no children left to search)
-  if (end && value === queryKey) return value;
+    if (value == null) {
+      if (end || index == null) break;
 
-  // Case 3: Recurse into selected child node
-  const nextPage = page.children[index ?? -1];
-  if (nextPage == null) return null;
+      parentStack.push(current);
+      current = current.children[index];
 
-  return searchInTree(nextPage, queryKey);
+      continue;
+    }
+
+    if (value != null) {
+      found = true;
+    }
+  } while (!found);
+
+  return {
+    currentPage: found ? current : null,
+    parentPage: parentStack.pop() ?? null,
+    isQueryKeyExists: found,
+  };
 }
 
 export function searchInPage(page: $BtPage, queryKey: RecordKey) {
@@ -35,23 +46,20 @@ export function searchInPage(page: $BtPage, queryKey: RecordKey) {
   };
 }
 
-export function searchInIterator(page: $BtPage, queryKey: RecordKey) {
+function searchInIterator(page: $BtPage, queryKey: RecordKey) {
   return function (node: $IteratorNode) {
     const targetIndex = findTargetIndexInLists(page.recordKeys, queryKey);
 
-    // No further children available — mark as terminal node
     if (page.children.length === 0) {
       node.last = true;
     }
 
-    // Exact match found
     if (targetIndex != null) {
       node.index = targetIndex;
-      node.value = page.recordKeys[targetIndex] as number;
+      node.value = page.recordKeys[targetIndex];
       return node;
     }
 
-    // Compute next child index for traversal
     const nextIndex = getNextPageIndex(page.recordKeys, queryKey);
     node.index = nextIndex;
 
