@@ -57,8 +57,6 @@ export function insertInTree(page: $BtPage, queryKey: number) {
 
       const { index: currentIndex, end, value } = searchInPage(pageAfterPromotion, queryKey);
 
-      if (end && value === queryKey) break;
-
       if (isPageOverflows(pageAfterPromotion)) {
         current = pageAfterPromotion;
       } else {
@@ -66,6 +64,8 @@ export function insertInTree(page: $BtPage, queryKey: number) {
         current = pageAfterPromotion.children[currentIndex!];
         unbalanced = false;
       }
+
+      if (end && value === queryKey) break;
 
       continue;
     }
