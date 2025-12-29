@@ -138,11 +138,11 @@ const dummy = createBtreePage({
   minimumDegree: 2,
 });
 
-const vals = [50, 40, 30, 20]; //10, 60, 70, 80, 90, 100
+const vals = [0, -100, 42, -101, -5, 6, 17, -103, 18, -105, -104]; //10, 60, 70, 80, 90, 100
 
 let bla = dummy;
 vals.forEach((val) => {
   bla = insertInTree(bla, val);
 });
 
-console.log(bla);
+console.dir(bla, { depth: null });
