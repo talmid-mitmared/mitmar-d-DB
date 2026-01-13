@@ -1,11 +1,4 @@
-import { divideListsIntoHalf, insertElementInLists } from '../../utils/array';
-import {
-  $BtPage,
-  createBtreePage,
-  getIndexOfPrimaryKey,
-  isAbleToInsert,
-  isPageOverflows,
-} from '../Page';
+import { $BtPage, createBtreePage, isAbleToInsert, isPageOverflows } from '../Page';
 import { searchInPage } from '../SearchOperation';
 import { propagate } from './propagate';
 
@@ -22,71 +15,59 @@ export function insertInPage(page: $BtPage, queryKey: number): $BtPage {
 }
 
 export function insertInTree(page: $BtPage, queryKey: number) {
-  let parentStack: { page: $BtPage; nextTraverseIndex: number }[] = [];
+  let returnStack: { page: $BtPage; childIndex: number }[] = [];
+
   let current = page;
   let inserted = false;
   let unbalanced = false;
+  let propagated = false;
 
   const reReference = (newPage: $BtPage) => {
-    const parent = parentStack.pop();
+    const parentTree = returnStack.pop();
 
-    // Since the insertion creates new object due to keep immutability, we have to re-reference it
-    if (parent != null) {
-      parent.page.children[parent.nextTraverseIndex] = newPage;
-      parentStack.push(parent);
+    const isNotRoot = parentTree != null;
+
+    if (isNotRoot) {
+      parentTree.page.children[parentTree.childIndex] = newPage;
+      returnStack.push(parentTree);
       current = newPage;
+
+      return;
     }
+
+    const { index: currentIndex } = searchInPage(newPage, queryKey);
+
+    returnStack.push({ page: newPage, childIndex: currentIndex == null ? 0 : currentIndex });
+
+    if (currentIndex != null) current = newPage.children[currentIndex == null ? 0 : currentIndex];
   };
 
   do {
+    if (current == null) break;
+
     const result = searchInPage(current, queryKey);
 
-    const isNoDuplicates = result.value == null;
-
     // Case 1: Leaf node with available space → perform direct insert
-    if (isAbleToInsert(current) && !inserted && isNoDuplicates) {
-      const pageAfterInsertion = insertInPage(current, queryKey);
+    if (isAbleToInsert(current) && !inserted) {
+      const pageAfterInsert = insertInPage(current, queryKey);
 
       // Since the insertion creates new object due to keep immutability, we have to re-reference it
-      reReference(pageAfterInsertion);
+      reReference(pageAfterInsert);
 
-      current = pageAfterInsertion;
+      current = pageAfterInsert;
       inserted = true;
+      unbalanced = false;
     }
 
-    // Case 3: Overflow detected → split the page and promote median to parent
+    // Case 2: Overflow detected → split the page and propogate primary key to parent
     if (isPageOverflows(current)) {
       unbalanced = true;
 
-      const parent = parentStack.pop();
+      const parent = returnStack.pop();
 
-      const pageAfterPropagation = propagate(current, parent?.page);
+      const pageAfterPropagate = propagate(current, parent?.page);
 
-      const isNewParentOverflows = isPageOverflows(pageAfterPropagation);
-
-      if (isNewParentOverflows) {
-        current = pageAfterPropagation;
-
-        continue;
-      }
-
-      const { index: currentIndex } = searchInPage(pageAfterPropagation, queryKey);
-      const isRoot = parentStack.length === 0;
-
-      if (!isNewParentOverflows) {
-        if (isRoot) {
-          parentStack.push({ page: pageAfterPropagation, nextTraverseIndex: currentIndex! });
-          current = pageAfterPropagation.children[currentIndex!];
-          unbalanced = false;
-        } else {
-          const grandParent = parentStack.pop();
-
-          if (grandParent != null) {
-            reReference(pageAfterPropagation);
-            unbalanced = false;
-          }
-        }
-      }
+      reReference(pageAfterPropagate);
 
       continue;
     }
@@ -96,10 +77,9 @@ export function insertInTree(page: $BtPage, queryKey: number) {
     }
 
     unbalanced = false;
-    parentStack.push({ page: current, nextTraverseIndex: result.index });
-
+    returnStack.push({ page: current, childIndex: result.index });
     current = current.children[result.index];
   } while (!(inserted && !unbalanced));
 
-  return parentStack.pop()?.page ?? current;
+  return returnStack.pop()?.page ?? current;
 }

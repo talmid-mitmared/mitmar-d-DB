@@ -106,11 +106,13 @@ export function insertElementInLists<T>({
   deleteCount?: number;
   elementsToInsert: Array<T> | T;
 }) {
+  const copy = [...baseLists];
+
   const elements = Array.isArray(elementsToInsert) ? elementsToInsert : [elementsToInsert];
 
-  baseLists.splice(indexToInsert, deleteCount, ...elements);
+  copy.splice(indexToInsert, deleteCount, ...elements);
 
-  return baseLists;
+  return copy;
 }
 
 export function deleteElementInLists<T>(baseLists: Array<T>, targetIndex: number) {
