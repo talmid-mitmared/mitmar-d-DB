@@ -15,59 +15,71 @@ export function insertInPage(page: $BtPage, queryKey: number): $BtPage {
 }
 
 export function insertInTree(page: $BtPage, queryKey: number) {
-  let returnStack: { page: $BtPage; childIndex: number }[] = [];
-
+  let parentStack: { page: $BtPage; nextTraverseIndex: number }[] = [];
   let current = page;
   let inserted = false;
   let unbalanced = false;
-  let propagated = false;
 
   const reReference = (newPage: $BtPage) => {
-    const parentTree = returnStack.pop();
+    const parent = parentStack.pop();
 
-    const isNotRoot = parentTree != null;
-
-    if (isNotRoot) {
-      parentTree.page.children[parentTree.childIndex] = newPage;
-      returnStack.push(parentTree);
+    // Since the insertion creates new object due to keep immutability, we have to re-reference it
+    if (parent != null) {
+      parent.page.children[parent.nextTraverseIndex] = newPage;
+      parentStack.push(parent);
       current = newPage;
-
-      return;
     }
-
-    const { index: currentIndex } = searchInPage(newPage, queryKey);
-
-    returnStack.push({ page: newPage, childIndex: currentIndex == null ? 0 : currentIndex });
-
-    if (currentIndex != null) current = newPage.children[currentIndex == null ? 0 : currentIndex];
   };
 
   do {
-    if (current == null) break;
-
     const result = searchInPage(current, queryKey);
 
+    const isNoDuplicates = result.value == null;
+
     // Case 1: Leaf node with available space → perform direct insert
-    if (isAbleToInsert(current) && !inserted) {
-      const pageAfterInsert = insertInPage(current, queryKey);
+    if (isAbleToInsert(current) && !inserted && isNoDuplicates) {
+      const pageAfterInsertion = insertInPage(current, queryKey);
 
       // Since the insertion creates new object due to keep immutability, we have to re-reference it
-      reReference(pageAfterInsert);
+      reReference(pageAfterInsertion);
 
-      current = pageAfterInsert;
+      current = pageAfterInsertion;
       inserted = true;
-      unbalanced = false;
     }
 
-    // Case 2: Overflow detected → split the page and propogate primary key to parent
+    // Case 3: Overflow detected → split the page and promote median to parent
     if (isPageOverflows(current)) {
       unbalanced = true;
 
-      const parent = returnStack.pop();
+      const parent = parentStack.pop();
 
-      const pageAfterPropagate = propagate(current, parent?.page);
+      const pageAfterPropagation = propagate(current, parent?.page);
 
-      reReference(pageAfterPropagate);
+      const isNewParentOverflows = isPageOverflows(pageAfterPropagation);
+
+      if (isNewParentOverflows) {
+        current = pageAfterPropagation;
+
+        continue;
+      }
+
+      const { index: currentIndex } = searchInPage(pageAfterPropagation, queryKey);
+      const isRoot = parentStack.length === 0;
+
+      if (!isNewParentOverflows) {
+        if (isRoot) {
+          parentStack.push({ page: pageAfterPropagation, nextTraverseIndex: currentIndex! });
+          current = pageAfterPropagation.children[currentIndex!];
+          unbalanced = false;
+        } else {
+          const grandParent = parentStack.pop();
+
+          if (grandParent != null) {
+            reReference(pageAfterPropagation);
+            unbalanced = false;
+          }
+        }
+      }
 
       continue;
     }
@@ -77,9 +89,10 @@ export function insertInTree(page: $BtPage, queryKey: number) {
     }
 
     unbalanced = false;
-    returnStack.push({ page: current, childIndex: result.index });
+    parentStack.push({ page: current, nextTraverseIndex: result.index });
+
     current = current.children[result.index];
   } while (!(inserted && !unbalanced));
 
-  return returnStack.pop()?.page ?? current;
+  return parentStack.pop()?.page ?? current;
 }
