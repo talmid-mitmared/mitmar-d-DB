@@ -5,7 +5,7 @@ import { createPageDebugReport } from './debugger';
 import { deleteInTree } from './DeleteOperation';
 import { insertInTree } from './InsertOperation';
 import { $BtPage, createBtreePage, isPageLeaf, isPageOverflows, isPageUnderflows } from './Page';
-import { searchInPage } from './SearchOperation';
+import { searchInPage, searchInTree } from './SearchOperation';
 
 class Btree {
   root = createBtreePage({
@@ -146,7 +146,8 @@ const vals = [
 let bla = dummy;
 vals.forEach((val) => {
   bla = insertInTree(bla, val);
-  console.dir(createPageDebugReport(bla), { depth: null });
 });
 
-console.dir(bla, { depth: null });
+vals.forEach((val) => {
+  searchInTree(bla, val);
+});

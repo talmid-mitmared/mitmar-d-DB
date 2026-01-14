@@ -3,6 +3,7 @@ import { $IteratorNode } from '../IteratorNode';
 import { $BtPage, RecordKey } from './Page';
 import { findTargetIndexInLists } from '../utils/array';
 import { getNextPageIndex } from '../utils/page';
+import { createPageDebugReport } from './debugger';
 
 export function searchInTree(page: $BtPage, queryKey: RecordKey) {
   let parentStack: $BtPage[] = [];
@@ -11,6 +12,8 @@ export function searchInTree(page: $BtPage, queryKey: RecordKey) {
 
   do {
     const { index, value, end } = searchInPage(current, queryKey);
+
+    createPageDebugReport(current);
 
     if (value == null) {
       if (end || index == null) break;

@@ -1,3 +1,4 @@
+import { __DEV__ } from '../environment';
 import {
   MaxNumberOfKeysFormula,
   MinNumberOfKeysFormula,
@@ -11,7 +12,7 @@ export type RecordKey = number;
 export type $BtPage = {
   recordKeys: RecordKey[];
   children: $BtPage[];
-  minimumDegree: number;
+  readonly minimumDegree: number;
 };
 
 export function isPageLeaf(page: $BtPage): boolean {
@@ -77,8 +78,19 @@ function createBtreePageImplObject(returnBPage?: $BtPage): $BtPage {
   };
 }
 
-// Toggle between object-based and class-based implementation.
-// Currently defaults to functional style for tree node construction.
-const classImpl = false as const;
+export function createBtreePage(returnBPage?: $BtPage) {
+  const original = createBtreePageImplObject(returnBPage);
 
-export const createBtreePage = !classImpl ? createBtreePageImplObject : createBtreePageImplObject; // fallback kept consistent for now
+  if (__DEV__) {
+    // We have to make sure we cannot revise the object of original one instead we can revise the copied Version
+    Object.freeze(original.recordKeys);
+    /**
+     * @todo: Have to add this code
+     */
+    // Object.freeze(original.children);
+
+    return original;
+  }
+
+  return original;
+}
