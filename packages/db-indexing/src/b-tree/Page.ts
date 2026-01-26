@@ -1,4 +1,3 @@
-import { __DEV__ } from '../environment';
 import {
   MaxNumberOfKeysFormula,
   MinNumberOfKeysFormula,
