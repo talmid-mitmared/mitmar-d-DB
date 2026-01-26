@@ -1,5 +1,5 @@
 {
-  "name": "b-tree-debugger",
+  "name": "@mitmared-db/b-tree-debugger",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mitmared-db/db-indexing": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
