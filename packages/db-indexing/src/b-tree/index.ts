@@ -146,6 +146,7 @@ const vals = [
 let bla = dummy;
 vals.forEach((val) => {
   bla = insertInTree(bla, val);
+  console.dir(bla, { depth: null });
 });
 
 vals.forEach((val) => {

@@ -81,16 +81,19 @@ function createBtreePageImplObject(returnBPage?: $BtPage): $BtPage {
 export function createBtreePage(returnBPage?: $BtPage) {
   const original = createBtreePageImplObject(returnBPage);
 
-  if (__DEV__) {
-    // We have to make sure we cannot revise the object of original one instead we can revise the copied Version
-    Object.freeze(original.recordKeys);
-    /**
-     * @todo: Have to add this code
-     */
-    // Object.freeze(original.children);
+  /**
+   * @todo: Has to put dev after implementing the debugger
+   */
+  // if (__DEV__) {
+  //   // We have to make sure we cannot revise the object of original one instead we can revise the copied Version
+  //   Object.freeze(original.recordKeys);
+  //   /**
+  //    * @todo: Have to add this code
+  //    */
+  //   // Object.freeze(original.children);
 
-    return original;
-  }
+  //   return original;
+  // }
 
   return original;
 }

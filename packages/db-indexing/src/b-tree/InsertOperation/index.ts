@@ -3,7 +3,9 @@ import { searchInPage } from '../SearchOperation';
 import { propagate } from './propagate';
 
 /**
- * @todo This is a "raw insert" — add structural validation or move to safer builder pattern.
+ * @todo Trash. has to make sure this to keep immutability
+ * @deprecated
+ * Trash. has to make sure this to keep immutability
  */
 export function insertInPage(page: $BtPage, queryKey: number): $BtPage {
   page.recordKeys.push(queryKey);

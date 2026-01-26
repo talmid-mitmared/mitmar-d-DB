@@ -4,6 +4,7 @@ import type { $BtPage } from './Page';
 type PageId = number;
 
 let nextPageId: PageId = 1;
+
 const pageIdMap = new WeakMap<$BtPage, PageId>();
 
 function getPageUniqueID(page: $BtPage): PageId | null {
@@ -17,6 +18,7 @@ function getPageUniqueID(page: $BtPage): PageId | null {
 function getTrackablePageId(page?: $BtPage): PageId | null {
   if (page == null) return null;
   if (!page.recordKeys?.length) return null;
+
   return getPageUniqueID(page);
 }
 

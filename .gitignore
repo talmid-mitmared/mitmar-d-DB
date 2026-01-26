@@ -41,3 +41,7 @@ yarn-error.log*
 # React Router
 /.react-router/
 /build/
+
+
+#Custom Dir
+mocked-data
