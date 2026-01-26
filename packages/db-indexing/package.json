@@ -1,6 +1,6 @@
 {
-  "name": "@mitmar-db/db-indexing",
-  "version": "0.0.0",
+  "name": "@mitmared-db/db-indexing",
+  "version": "0.0.1",
   "private": true,
   "exports": {
     ".": "./src/index.ts"
@@ -9,25 +9,34 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "start": "tsx watch src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "generate-dummy-data-script": "dotenv -e .env.local -- node scripts/generate-dummy-db-keys-script/index.js && node scripts/generate-random-integer-lists.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "format": "prettier --write ."
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
-    "@mitmar-db/eslint-config": "*",
-    "@mitmar-db/typescript-config": "*",
+    "@mitmared-db/eslint-config": "*",
+    "@mitmared-db/typescript-config": "*",
     "@turbo/gen": "^2.5.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.3",
+    "@types/seed-random": "^2.2.4",
+    "@types/seedrandom": "^3.0.8",
+    "dotenv": "^16.6.1",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.30.0",
     "globals": "^16.0.0",
     "jest": "^29.7.0",
+    "openai": "^6.16.0",
     "prettier": "^3.5.3",
+    "seed-random": "^2.2.0",
+    "seedrandom": "^3.0.5",
     "ts-jest": "^29.3.4",
     "tsx": "^4.19.4",
     "typescript": "5.8.2",
-    "typescript-eslint": "^8.29.0"
+    "typescript-eslint": "^8.29.0",
+    "yargs": "^17.7.2"
   }
 }

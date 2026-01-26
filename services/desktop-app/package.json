@@ -1,5 +1,5 @@
 {
-  "name": "@mitmar-db/desktop-app",
+  "name": "@mitmared-db/desktop-app",
   "productName": "desktop-app",
   "version": "1.0.0",
   "main": ".webpack/main",

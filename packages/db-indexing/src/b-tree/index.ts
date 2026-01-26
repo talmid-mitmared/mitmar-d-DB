@@ -1,11 +1,11 @@
-<<<<<<< Updated upstream
 export { insertInTree, insertInPage } from './InsertOperation';
 export { searchInTree, searchInPage } from './SearchOperation';
 export * from './Page';
+import { createPageDebugReport } from './debugger';
 import { deleteInTree } from './DeleteOperation';
 import { insertInTree } from './InsertOperation';
 import { $BtPage, createBtreePage, isPageLeaf, isPageOverflows, isPageUnderflows } from './Page';
-import { searchInPage } from './SearchOperation';
+import { searchInPage, searchInTree } from './SearchOperation';
 
 class Btree {
   root = createBtreePage({
@@ -136,32 +136,19 @@ generateDotFromBTree(insertedTree.root);
 const dummy = createBtreePage({
   recordKeys: [],
   children: [],
-  minimumDegree: 2,
+  minimumDegree: 3,
 });
 
-const vals = [50, 40, 30, 20]; //10, 60, 70, 80, 90, 100
-
+const vals = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+  28, 29, 30,
+]; //10, 60, 70, 80, 90, 100
 let bla = dummy;
 vals.forEach((val) => {
   bla = insertInTree(bla, val);
+  console.dir(bla, { depth: null });
 });
 
-=======
-import { insertInTree } from './InsertOperation';
-import { createBtreePage } from './Page';
-
-const dummy = createBtreePage({
-  recordKeys: [],
-  children: [],
-  minimumDegree: 2,
-});
-
-const vals = [50, 40, 30, 20]; //10, 60, 70, 80, 90, 100
-
-let bla = dummy;
 vals.forEach((val) => {
-  bla = insertInTree(bla, val);
+  searchInTree(bla, val);
 });
-
->>>>>>> Stashed changes
-console.log(bla);
